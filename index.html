@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+  <title>pen2 — Japanese Character Writing SRS</title>
+  <meta name="description" content="Japanese character writing practice with spaced repetition and stroke-order validation.">
+  <meta name="theme-color" content="#2563eb">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-title" content="pen2">
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="apple-touch-icon" href="icons/icon-192.png">
+  <link rel="icon" type="image/png" sizes="192x192" href="icons/icon-192.png">
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <div id="app">
+    <header class="app-header">
+      <h1>pen2</h1>
+      <nav>
+        <button id="nav-dashboard" class="nav-btn" aria-label="Dashboard">Dashboard</button>
+        <button id="nav-study" class="nav-btn" aria-label="Study">Study</button>
+        <button id="nav-settings" class="nav-btn" aria-label="Settings">Settings</button>
+      </nav>
+    </header>
+
+    <main id="main-content">
+      <!-- Views injected here -->
+    </main>
+
+    <footer class="app-footer">
+      <p>Stroke data from <a href="http://kanjivg.tagaini.net" target="_blank" rel="noopener">KanjiVG</a> (CC BY-SA 3.0)</p>
+    </footer>
+  </div>
+
+  <!-- Modules -->
+  <script type="module" src="js/app.js"></script>
+</body>
+</html>

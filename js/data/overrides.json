@@ -1,0 +1,4 @@
+{
+  "overrides": [],
+  "notes": "Pedagogical stroke count overrides. Add entries like: {\"char\":\"あ\",\"strokeCount\":3} if KanjiVG diverges from standard teaching."
+}

@@ -1,0 +1,9 @@
+# OS
+.DS_Store
+
+# Node (only used by the optional extraction script; no runtime deps)
+node_modules/
+
+# Editor
+.vscode/
+.idea/
