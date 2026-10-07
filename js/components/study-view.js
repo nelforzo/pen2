@@ -114,8 +114,24 @@ export class StudyView {
     this.ratingButtons = this.container.querySelector('#rating-buttons');
     this.studyControls = this.container.querySelector('#study-controls');
 
+    this.setupHiDPI();
     this.drawGrid();
     this.bindEvents();
+  }
+
+  setupHiDPI() {
+    // Scale canvas backing stores to the device pixel ratio so strokes and the
+    // grid stay crisp on high-DPI phone/tablet screens. Drawing code continues
+    // to use the logical 109-unit coordinate space via ctx.scale().
+    const dpr = Math.min(window.devicePixelRatio || 1, 3);
+    [this.gridCanvas, this.drawCanvas].forEach((canvas) => {
+      canvas.width = Math.round(VIEWBOX * dpr);
+      canvas.height = Math.round(VIEWBOX * dpr);
+      const ctx = canvas.getContext('2d');
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    });
+    this.drawCtx = this.drawCanvas.getContext('2d');
+    this._dpr = dpr;
   }
 
   drawGrid() {
@@ -147,20 +163,36 @@ export class StudyView {
   bindEvents() {
     const container = this.container.querySelector('#drawing-container');
 
+    // Ignore any pointer type we don't want (e.g. right mouse button).
+    const isDrawable = (e) => e.isPrimary && (e.pointerType === 'pen' || e.pointerType === 'touch' || e.button === 0 || e.buttons === 1);
+
     container.addEventListener('pointerdown', (e) => {
+      if (!isDrawable(e)) return;
+      if (this.isDrawing) return; // ignore extra fingers / palm while drawing
       e.preventDefault();
-      container.setPointerCapture(e.pointerId);
+      this._activePointerId = e.pointerId;
+      this._usingTouch = e.pointerType !== 'mouse';
+      try { container.setPointerCapture(e.pointerId); } catch { /* not supported */ }
       this.startStroke(this.getPoint(e));
     });
 
     container.addEventListener('pointermove', (e) => {
-      if (!this.isDrawing) return;
+      if (!this.isDrawing || e.pointerId !== this._activePointerId) return;
+      e.preventDefault();
       this.addPoint(this.getPoint(e));
     });
 
-    container.addEventListener('pointerup', () => {
-      if (!this.isDrawing) return;
+    const finish = (e) => {
+      if (!this.isDrawing || e.pointerId !== this._activePointerId) return;
+      this._activePointerId = null;
       this.endStroke();
+    };
+
+    container.addEventListener('pointerup', finish);
+    container.addEventListener('pointercancel', finish);
+    // Fallback: if the pointer is lost (e.g. system gesture), end the stroke gracefully.
+    container.addEventListener('lostpointercapture', () => {
+      if (this.isDrawing) { this._activePointerId = null; this.endStroke(); }
     });
 
     this.container.querySelector('#btn-undo').addEventListener('click', () => this.undoStroke());
@@ -319,7 +351,9 @@ export class StudyView {
     paths.forEach((p, i) => {
       p.classList.toggle('highlight', i === this.strokeIndex);
     });
-    this.strokeInfo.textContent = `Stroke ${this.strokeIndex + 1} of ${this.charData?.paths.length || 0}`;
+    const total = this.charData?.paths.length || 0;
+    const shown = Math.min(this.strokeIndex + 1, total);
+    this.strokeInfo.textContent = `Stroke ${shown} of ${total}`;
   }
 
   clearDrawCanvas() {

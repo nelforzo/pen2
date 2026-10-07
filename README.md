@@ -46,6 +46,11 @@ This fetches KanjiVG SVGs over the network and writes `js/data/hiragana.json`.
 - **Progress tracking** on the dashboard (due / new / learning / mature counts, per-card state).
 - **Keyboard controls** for accessibility: `U` undo, `H` show stroke, `S` skip, `1–4` rate.
 - **Offline**: zero external runtime requests; everything is local.
+- **Mobile-first**: responsive drawing canvas sized with `min(vw, vh)` so it always
+  fits on screen; large ≥44 px touch targets; safe-area insets for notched devices;
+  high-DPI canvas rendering; landscape phones get a side-by-side layout. Full
+  Pointer Events support for stylus, touch, and mouse (with multi-touch/palm
+  rejection while a stroke is in progress).
 
 ### Keyboard shortcuts
 
@@ -161,8 +166,13 @@ hints feed the auto-rating suggestion.
   Phase 1 but may warrant special handling later.
 - **Accessibility.** Canvas drawing is inherently not screen-reader accessible. All
   non-canvas controls have ARIA labels, there is an `aria-live` status region for
-  feedback, and full keyboard control of review actions. A non-visual fallback
+  feedback, and full keyboard control of review actions. Zoom is enabled (no
+  `user-scalable=no`), and safe-area insets are respected. A non-visual fallback
   (e.g. typed-answer mode) is out of scope for Phase 1.
+- **Mobile.** Verified on 375–844 px viewports (portrait and landscape) and tablet:
+  no horizontal overflow, the drawing area always fits in view, and stroke capture
+  works with touch and mouse. Tested via headless Chromium device emulation; not
+  yet tested on physical hardware or with a real stylus.
 - **Arrows.** The brief mentions arrow overlays; Phase 1 renders stroke *numbers*
   only. Arrows can be added by computing end-tangents of each path.
 - **localStorage** caps around 5 MB. Fine for hiragana/katakana; kanji will need
