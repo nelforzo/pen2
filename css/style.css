@@ -184,7 +184,17 @@ html, body {
 
 .btn-large {
   padding: 0.875rem 1.75rem;
-  font-size: 1rem;
+  font-size: 1.05rem;
+}
+
+.deck-heading {
+  margin-bottom: 0.25rem;
+}
+
+.deck-hint {
+  color: var(--text-muted);
+  font-size: 0.875rem;
+  margin-bottom: 0.75rem;
 }
 
 .card-list {
@@ -197,35 +207,52 @@ html, body {
   background: var(--surface);
   border: 1px solid var(--border);
   border-radius: var(--radius);
+  min-height: 84px;
   padding: 0.75rem;
   text-align: center;
-  cursor: default;
-  transition: transform 0.1s;
+  cursor: pointer;
+  transition: transform 0.1s, border-color 0.15s, background 0.15s;
   position: relative;
+  font-family: inherit;
+  color: inherit;
+  -webkit-appearance: none;
+  appearance: none;
 }
 
-.card-item:hover {
+.card-item:hover,
+.card-item:focus-visible {
   transform: translateY(-2px);
+  border-color: var(--primary);
+}
+
+.card-item:active {
+  transform: scale(0.96);
 }
 
 .card-item .char {
-  font-size: 2rem;
+  font-size: 2.25rem;
+  line-height: 1.1;
+}
+
+.card-item .card-mark {
+  display: block;
+  height: 1rem;
+  font-size: 0.85rem;
   line-height: 1;
+  margin-top: 0.15rem;
 }
 
-.card-item .status {
-  font-size: 0.7rem;
-  margin-top: 0.25rem;
-  padding: 0.1rem 0.4rem;
-  border-radius: 999px;
-  display: inline-block;
+.card-item.done {
+  background: var(--primary-light);
+  border-color: transparent;
 }
+.card-item.done .card-mark { color: var(--primary); }
 
-.status-new { background: var(--border); color: var(--text-muted); }
-.status-learning { background: var(--warn-light); color: var(--warn); }
-.status-review { background: var(--primary-light); color: var(--primary); }
-.status-mature { background: var(--accent-light); color: var(--accent); }
-.status-relearning { background: var(--danger-light); color: var(--danger); }
+.card-item.done-clean {
+  background: var(--accent-light);
+  border-color: transparent;
+}
+.card-item.done-clean .card-mark { color: var(--accent); }
 
 /* Study View */
 .study-view {
@@ -314,48 +341,15 @@ html, body {
   justify-content: center;
 }
 
-.rating-buttons {
+.result-buttons {
   display: flex;
   gap: 0.5rem;
   flex-wrap: wrap;
   justify-content: center;
 }
 
-.rating-btn {
-  min-height: 48px;
-  min-width: 72px;
-  padding: 0.6rem 1rem;
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
-  background: var(--surface);
-  cursor: pointer;
-  font-size: 0.875rem;
-  font-weight: 500;
-  transition: all 0.15s;
-  user-select: none;
-  -webkit-user-select: none;
-}
-
-.rating-btn:hover {
-  transform: translateY(-1px);
-}
-
-.rating-btn.again { border-color: var(--danger); color: var(--danger); }
-.rating-btn.again:hover { background: var(--danger-light); }
-
-.rating-btn.hard { border-color: var(--warn); color: var(--warn); }
-.rating-btn.hard:hover { background: var(--warn-light); }
-
-.rating-btn.good { border-color: var(--primary); color: var(--primary); }
-.rating-btn.good:hover { background: var(--primary-light); }
-
-.rating-btn.easy { border-color: var(--accent); color: var(--accent); }
-.rating-btn.easy:hover { background: var(--accent-light); }
-
-.rating-btn:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-  transform: none !important;
+.result-buttons .btn {
+  min-width: 96px;
 }
 
 .study-info {
@@ -470,15 +464,15 @@ html, body {
     padding: 0.6rem 0.5rem;
     font-size: 0.85rem;
   }
-  .rating-buttons {
+  .result-buttons {
     gap: 0.4rem;
     width: 100%;
   }
-  .rating-btn {
-    flex: 1 1 22%;
+  .result-buttons .btn {
+    flex: 1 1 30%;
     min-width: 0;
-    padding: 0.6rem 0.25rem;
-    font-size: 0.82rem;
+    padding: 0.6rem 0.4rem;
+    font-size: 0.9rem;
   }
   .study-prompt .reading {
     font-size: 1.1rem;
@@ -513,13 +507,13 @@ html, body {
   .study-prompt { grid-area: prompt; }
   .study-info   { grid-area: info; }
   .study-controls { grid-area: controls; }
-  .rating-buttons { grid-area: rating; }
+  .result-buttons { grid-area: rating; }
   .study-prompt .reading { font-size: 1rem; }
   .study-prompt .reading > div:first-child { font-size: 2rem !important; margin-bottom: 0 !important; }
   .study-controls,
-  .rating-buttons { flex-wrap: nowrap; }
-  .study-controls .btn { flex: 1 1 0; padding: 0.5rem 0.4rem; font-size: 0.8rem; }
-  .rating-btn { flex: 1 1 0; min-width: 0; padding: 0.5rem 0.2rem; font-size: 0.8rem; }
+  .result-buttons { flex-wrap: nowrap; }
+  .study-controls .btn { flex: 1 1 0; padding: 0.5rem 0.4rem; font-size: 0.85rem; }
+  .result-buttons .btn { flex: 1 1 0; min-width: 0; padding: 0.5rem 0.3rem; font-size: 0.85rem; }
 }
 
 /* Tablets get a comfortably large canvas */

@@ -23,18 +23,18 @@ export const Storage = {
     localStorage.removeItem(PREFIX + key);
   },
 
-  async getCards() {
-    return await this.get('cards', []);
+  /** Progress is a plain object: { "あ": { practiced, clean, attempts }, ... } */
+  async getProgress() {
+    return await this.get('progress', {});
   },
 
-  async saveCards(cards) {
-    await this.set('cards', cards);
+  async saveProgress(progress) {
+    await this.set('progress', progress);
   },
 
   async getSettings() {
     return await this.get('settings', {
       showRomaji: true,
-      strictness: 'normal',
     });
   },
 

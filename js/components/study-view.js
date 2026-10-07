@@ -1,65 +1,45 @@
 import { Storage } from '../lib/storage.js';
-import { schedule, RATING, getMaturity, getModeLabel, suggestRating, isDue } from '../lib/srs.js';
 import { matchStroke, getThresholdForMode, samplePath } from '../lib/stroke-matcher.js';
+import { standardCharacters, recordPractice } from '../lib/progress.js';
 
 const VIEWBOX = 109;
 
+// Recognition thresholds are fairly forgiving — this is for young learners.
+const TRACE_THRESHOLD = getThresholdForMode('trace');
+
 export class StudyView {
-  constructor(container, data, onComplete) {
+  constructor(container, data, options = {}) {
     this.container = container;
     this.data = data; // hiragana.json
-    this.onComplete = onComplete;
-    this.cards = [];
-    this.queue = [];
-    this.currentIndex = 0;
-    this.sessionStats = new Map(); // char -> { totalStrokes, retries, hints }
+    this.onExit = options.onExit || (() => {});
+
+    // The practice sequence: all standard characters (optionally starting at one).
+    this.sequence = standardCharacters().filter((c) =>
+      this.data.some((d) => d.char === c)
+    );
+    this.startChar = options.startChar || null;
+
     this.acceptedStrokes = [];
     this.currentStroke = [];
     this.isDrawing = false;
     this.strokeIndex = 0;
     this.charData = null;
-    this.mode = 'trace';
-    this.sampledPaths = [];
+    this.attemptedThisStroke = false; // did the child already miss the current stroke?
+    this.cleanRun = true;
     this.settings = { showRomaji: true };
   }
 
   async init() {
     this.settings = await Storage.getSettings();
-    this.cards = await Storage.getCards();
-    if (!this.cards.length) {
-      // Seed with all characters as new
-      this.cards = this.data.map(d => ({
-        id: d.char,
-        state: 'new',
-        step: 0,
-        interval: 0,
-        ef: 2.5,
-        due: Date.now(),
-        reps: 0,
-        lapses: 0,
-        totalReviews: 0,
-        strokesAttempted: 0,
-        strokesCorrect: 0,
-        lastReview: null,
-      }));
-    }
-    this.buildQueue();
-    this.render();
-    this.loadCard(0);
-  }
+    this.progress = await Storage.getProgress();
 
-  buildQueue() {
-    // Show new cards first, then due reviews
-    const newCards = this.cards.filter(c => c.state === 'new');
-    const dueCards = this.cards.filter(c => c.state !== 'new' && isDue(c));
-    // Limit new cards per session
-    const maxNew = 10;
-    this.queue = [...newCards.slice(0, maxNew), ...dueCards];
-    // Shuffle slightly but keep new first
-    for (let i = dueCards.length - 1; i > 0; i--) {
-      const j = Math.floor(Math.random() * (i + 1));
-      [dueCards[i], dueCards[j]] = [dueCards[j], dueCards[i]];
-    }
+    const startIndex = this.startChar
+      ? Math.max(0, this.sequence.indexOf(this.startChar))
+      : 0;
+    this.index = startIndex;
+
+    this.render();
+    this.loadCharacter(this.index);
   }
 
   render() {
@@ -67,10 +47,9 @@ export class StudyView {
       <div class="study-view">
         <div class="study-prompt">
           <div class="reading" id="prompt-reading" aria-live="polite"></div>
-          <span class="mode-badge" id="mode-badge">Trace</span>
         </div>
         <div class="drawing-container" id="drawing-container" role="img"
-             aria-label="Handwriting practice area. Draw the character stroke by stroke.">
+             aria-label="れんしゅうエリア。せんを かいてください。">
           <svg id="shadow-svg" viewBox="0 0 ${VIEWBOX} ${VIEWBOX}" xmlns="http://www.w3.org/2000/svg">
             <g id="shadow-group"></g>
             <g id="numbers-group"></g>
@@ -82,24 +61,23 @@ export class StudyView {
           </div>
         </div>
         <div class="study-info">
-          <span class="progress" id="study-progress">Card 1 / 5</span>
+          <span class="progress" id="study-progress"></span>
           <span id="stroke-info"></span>
         </div>
+
         <div class="study-controls" id="study-controls">
-          <button class="btn btn-secondary" id="btn-undo" aria-label="Undo last accepted stroke (keyboard: U)">Undo Stroke</button>
-          <button class="btn btn-secondary" id="btn-hint" aria-label="Show the correct stroke (keyboard: H)">Show Stroke</button>
-          <button class="btn btn-secondary" id="btn-skip" aria-label="Skip this card, rate Again (keyboard: S)">Skip</button>
+          <button class="btn btn-secondary" id="btn-clear" aria-label="けす">けす</button>
+          <button class="btn btn-secondary" id="btn-back" aria-label="もどる">もどる</button>
         </div>
-        <div class="rating-buttons" id="rating-buttons" style="display:none" role="group" aria-label="Rate your recall">
-          <button class="rating-btn again" data-rating="1" aria-label="Again (keyboard: 1)">Again</button>
-          <button class="rating-btn hard" data-rating="2" aria-label="Hard (keyboard: 2)">Hard</button>
-          <button class="rating-btn good" data-rating="3" aria-label="Good (keyboard: 3)">Good</button>
-          <button class="rating-btn easy" data-rating="4" aria-label="Easy (keyboard: 4)">Easy</button>
+
+        <div class="result-buttons" id="result-buttons" style="display:none" role="group" aria-label="つぎの どうさ">
+          <button class="btn btn-primary btn-large" id="btn-next">つぎへ</button>
+          <button class="btn btn-secondary btn-large" id="btn-repeat">もういちど</button>
+          <button class="btn btn-secondary" id="btn-back2">もどる</button>
         </div>
       </div>
     `;
 
-    this.shadowSvg = this.container.querySelector('#shadow-svg');
     this.shadowGroup = this.container.querySelector('#shadow-group');
     this.numbersGroup = this.container.querySelector('#numbers-group');
     this.gridCanvas = this.container.querySelector('#grid-canvas');
@@ -108,11 +86,10 @@ export class StudyView {
     this.feedbackOverlay = this.container.querySelector('#feedback-overlay');
     this.feedbackText = this.container.querySelector('#feedback-text');
     this.promptReading = this.container.querySelector('#prompt-reading');
-    this.modeBadge = this.container.querySelector('#mode-badge');
     this.progressEl = this.container.querySelector('#study-progress');
     this.strokeInfo = this.container.querySelector('#stroke-info');
-    this.ratingButtons = this.container.querySelector('#rating-buttons');
     this.studyControls = this.container.querySelector('#study-controls');
+    this.resultButtons = this.container.querySelector('#result-buttons');
 
     this.setupHiDPI();
     this.drawGrid();
@@ -120,9 +97,6 @@ export class StudyView {
   }
 
   setupHiDPI() {
-    // Scale canvas backing stores to the device pixel ratio so strokes and the
-    // grid stay crisp on high-DPI phone/tablet screens. Drawing code continues
-    // to use the logical 109-unit coordinate space via ctx.scale().
     const dpr = Math.min(window.devicePixelRatio || 1, 3);
     [this.gridCanvas, this.drawCanvas].forEach((canvas) => {
       canvas.width = Math.round(VIEWBOX * dpr);
@@ -139,11 +113,7 @@ export class StudyView {
     ctx.clearRect(0, 0, VIEWBOX, VIEWBOX);
     ctx.strokeStyle = '#f0f0f0';
     ctx.lineWidth = 1;
-
-    // Outer box
     ctx.strokeRect(2, 2, VIEWBOX - 4, VIEWBOX - 4);
-
-    // Center cross (vertical + horizontal divisions only)
     ctx.beginPath();
     ctx.moveTo(VIEWBOX / 2, 2);
     ctx.lineTo(VIEWBOX / 2, VIEWBOX - 2);
@@ -154,17 +124,16 @@ export class StudyView {
 
   bindEvents() {
     const container = this.container.querySelector('#drawing-container');
-
-    // Ignore any pointer type we don't want (e.g. right mouse button).
-    const isDrawable = (e) => e.isPrimary && (e.pointerType === 'pen' || e.pointerType === 'touch' || e.button === 0 || e.buttons === 1);
+    const isDrawable = (e) =>
+      e.isPrimary &&
+      (e.pointerType === 'pen' || e.pointerType === 'touch' || e.button === 0 || e.buttons === 1);
 
     container.addEventListener('pointerdown', (e) => {
       if (!isDrawable(e)) return;
-      if (this.isDrawing) return; // ignore extra fingers / palm while drawing
+      if (this.isDrawing || this.isComplete) return;
       e.preventDefault();
       this._activePointerId = e.pointerId;
-      this._usingTouch = e.pointerType !== 'mouse';
-      try { container.setPointerCapture(e.pointerId); } catch { /* not supported */ }
+      try { container.setPointerCapture(e.pointerId); } catch { /* ignore */ }
       this.startStroke(this.getPoint(e));
     });
 
@@ -182,37 +151,26 @@ export class StudyView {
 
     container.addEventListener('pointerup', finish);
     container.addEventListener('pointercancel', finish);
-    // Fallback: if the pointer is lost (e.g. system gesture), end the stroke gracefully.
     container.addEventListener('lostpointercapture', () => {
       if (this.isDrawing) { this._activePointerId = null; this.endStroke(); }
     });
 
-    this.container.querySelector('#btn-undo').addEventListener('click', () => this.undoStroke());
-    this.container.querySelector('#btn-hint').addEventListener('click', () => this.showHint());
-    this.container.querySelector('#btn-skip').addEventListener('click', () => this.skipCard());
+    this.container.querySelector('#btn-clear').addEventListener('click', () => this.resetStrokes());
+    this.container.querySelector('#btn-back').addEventListener('click', () => this.onExit());
+    this.container.querySelector('#btn-back2').addEventListener('click', () => this.onExit());
+    this.container.querySelector('#btn-next').addEventListener('click', () => this.next());
+    this.container.querySelector('#btn-repeat').addEventListener('click', () => this.repeat());
 
-    this.ratingButtons.querySelectorAll('.rating-btn').forEach(btn => {
-      btn.addEventListener('click', () => {
-        const rating = parseInt(btn.dataset.rating, 10);
-        this.rateCard(rating);
-      });
-    });
-
-    // Keyboard shortcuts (review controls accessibility)
     this._keyHandler = (e) => {
       if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
       const key = e.key.toLowerCase();
-      const ratingVisible = this.ratingButtons.style.display !== 'none';
-      if (ratingVisible && ['1', '2', '3', '4'].includes(key)) {
-        e.preventDefault();
-        this.rateCard(parseInt(key, 10));
+      if (this.isComplete) {
+        if (key === 'n' || key === 'arrowright') { e.preventDefault(); this.next(); }
+        else if (key === 'r') { e.preventDefault(); this.repeat(); }
         return;
       }
-      if (!ratingVisible) {
-        if (key === 'u') { e.preventDefault(); this.undoStroke(); }
-        else if (key === 'h') { e.preventDefault(); this.showHint(); }
-        else if (key === 's') { e.preventDefault(); this.skipCard(); }
-      }
+      if (key === 'c') { e.preventDefault(); this.resetStrokes(); }
+      else if (key === 'b' || key === 'escape') { e.preventDefault(); this.onExit(); }
     };
     window.addEventListener('keydown', this._keyHandler);
   }
@@ -231,30 +189,22 @@ export class StudyView {
     };
   }
 
-  loadCard(index) {
-    if (index >= this.queue.length) {
-      this.finishSession();
-      return;
-    }
+  loadCharacter(index) {
+    this.index = index;
+    const char = this.sequence[index];
+    this.charData = this.data.find((d) => d.char === char);
 
-    this.currentIndex = index;
-    const card = this.queue[index];
-    this.charData = this.data.find(d => d.char === card.id);
-    this.mode = getMaturity(card);
     this.strokeIndex = 0;
     this.acceptedStrokes = [];
     this.currentStroke = [];
     this.isDrawing = false;
-    this.sampledPaths = [];
+    this.attemptedThisStroke = false;
+    this.cleanRun = true;
+    this.isComplete = false;
+    this.hintsUsed = 0;
 
-    // Pre-sample reference paths
-    if (this.charData) {
-      this.sampledPaths = this.charData.paths.map(p => samplePath(p));
-    }
-
-    if (!this.sessionStats.has(card.id)) {
-      this.sessionStats.set(card.id, { totalStrokes: 0, retries: 0, hints: 0 });
-    }
+    // Pre-sample reference paths for recognition.
+    this.sampledPaths = this.charData ? this.charData.paths.map((p) => samplePath(p)) : [];
 
     this.updateUI();
     this.renderShadow();
@@ -262,25 +212,15 @@ export class StudyView {
   }
 
   updateUI() {
-    const card = this.queue[this.currentIndex];
-    const total = this.queue.length;
-    const idx = this.currentIndex + 1;
-    this.progressEl.textContent = `Card ${idx} / ${total}`;
-    this.modeBadge.textContent = getModeLabel(this.mode);
-
-    const romaji = this.getRomaji(card.id);
+    const char = this.sequence[this.index];
+    const romaji = this.getRomaji(char);
     this.promptReading.innerHTML = `
-      <div style="font-size:2.5rem;margin-bottom:0.25rem">${card.id}</div>
+      <div style="font-size:2.5rem;margin-bottom:0.25rem">${char}</div>
       ${this.settings.showRomaji && romaji ? `<div style="font-size:1rem;color:var(--text-muted)">${romaji}</div>` : ''}
     `;
-
-    // Show/hide numbers based on mode
-    this.numbersGroup.style.display = this.mode === 'trace' ? 'block' : 'none';
-    // Show/hide shadow based on mode
-    this.shadowGroup.style.opacity = this.mode === 'recall' ? '0' : '1';
-
+    this.progressEl.textContent = `${this.index + 1} / ${this.sequence.length}`;
     this.strokeInfo.textContent = `Stroke ${this.strokeIndex + 1} of ${this.charData?.paths.length || 0}`;
-    this.ratingButtons.style.display = 'none';
+    this.resultButtons.style.display = 'none';
     this.studyControls.style.display = 'flex';
   }
 
@@ -296,14 +236,6 @@ export class StudyView {
       'や':'ya','ゆ':'yu','よ':'yo',
       'ら':'ra','り':'ri','る':'ru','れ':'re','ろ':'ro',
       'わ':'wa','を':'wo','ん':'n',
-      'が':'ga','ぎ':'gi','ぐ':'gu','げ':'ge','ご':'go',
-      'ざ':'za','じ':'ji','ず':'zu','ぜ':'ze','ぞ':'zo',
-      'だ':'da','ぢ':'ji','づ':'zu','で':'de','ど':'do',
-      'ば':'ba','び':'bi','ぶ':'bu','べ':'be','ぼ':'bo',
-      'ぱ':'pa','ぴ':'pi','ぷ':'pu','ぺ':'pe','ぽ':'po',
-      'ぁ':'a','ぃ':'i','ぅ':'u','ぇ':'e','ぉ':'o',
-      'ゃ':'ya','ゅ':'yu','ょ':'yo','っ':'tsu','ゎ':'wa',
-      'ゐ':'i','ゑ':'e'
     };
     return map[char] || '';
   }
@@ -324,8 +256,8 @@ export class StudyView {
       this.shadowGroup.appendChild(path);
     });
 
-    if (this.mode === 'trace' && this.charData.numbers) {
-      this.charData.numbers.forEach(num => {
+    if (this.charData.numbers) {
+      this.charData.numbers.forEach((num) => {
         const text = document.createElementNS('http://www.w3.org/2000/svg', 'text');
         text.setAttribute('x', num.x);
         text.setAttribute('y', num.y);
@@ -340,9 +272,7 @@ export class StudyView {
 
   updateHighlight() {
     const paths = this.shadowGroup.querySelectorAll('.shadow-path');
-    paths.forEach((p, i) => {
-      p.classList.toggle('highlight', i === this.strokeIndex);
-    });
+    paths.forEach((p, i) => p.classList.toggle('highlight', i === this.strokeIndex));
     const total = this.charData?.paths.length || 0;
     const shown = Math.min(this.strokeIndex + 1, total);
     this.strokeInfo.textContent = `Stroke ${shown} of ${total}`;
@@ -397,117 +327,82 @@ export class StudyView {
 
   endStroke() {
     this.isDrawing = false;
-    // Require at least 2 captured points for a stroke (lowered from 3 to make
-    // recognition more lenient on short/fast strokes).
     if (this.currentStroke.length < 2) {
       this.currentStroke = [];
       this.redrawAcceptedStrokes();
       return;
     }
 
-    const stats = this.sessionStats.get(this.queue[this.currentIndex].id);
-    stats.totalStrokes++;
-
     const refPath = this.charData.paths[this.strokeIndex];
-    const threshold = getThresholdForMode(this.mode);
-    const result = matchStroke(this.currentStroke, refPath, { threshold });
+    const result = matchStroke(this.currentStroke, refPath, { threshold: TRACE_THRESHOLD });
 
     if (result.accepted) {
+      if (this.attemptedThisStroke) this.cleanRun = false;
       this.acceptedStrokes.push([...this.currentStroke]);
       this.currentStroke = [];
       this.strokeIndex++;
+      this.attemptedThisStroke = false;
       this.redrawAcceptedStrokes();
       this.updateHighlight();
 
       if (this.strokeIndex >= this.charData.paths.length) {
-        this.showCompletion();
+        this.complete();
       }
     } else {
-      stats.retries++;
+      // A miss on this stroke means it wasn't a clean run.
+      this.attemptedThisStroke = true;
+      this.cleanRun = false;
       this.currentStroke = [];
       this.redrawAcceptedStrokes();
-      this.showFeedback('Try again', 800);
+      this.showFeedback('もう いちど', 800);
     }
   }
 
   showFeedback(text, duration = 1000) {
     this.feedbackText.textContent = text;
     this.feedbackOverlay.classList.add('visible');
-    setTimeout(() => {
-      this.feedbackOverlay.classList.remove('visible');
-    }, duration);
+    setTimeout(() => this.feedbackOverlay.classList.remove('visible'), duration);
   }
 
-  showHint() {
-    const stats = this.sessionStats.get(this.queue[this.currentIndex].id);
-    stats.hints++;
-    // Flash the correct stroke
-    const paths = this.shadowGroup.querySelectorAll('.shadow-path');
-    const target = paths[this.strokeIndex];
-    if (!target) return;
-    const originalStroke = target.getAttribute('stroke');
-    target.setAttribute('stroke', '#059669');
-    target.setAttribute('stroke-width', '5');
-    setTimeout(() => {
-      target.setAttribute('stroke', originalStroke || '#000');
-      target.setAttribute('stroke-width', '3');
-    }, 1200);
+  resetStrokes() {
+    if (this.isComplete) return;
+    this.strokeIndex = 0;
+    this.acceptedStrokes = [];
+    this.currentStroke = [];
+    this.attemptedThisStroke = false;
+    this.cleanRun = true;
+    this.hintsUsed = 0;
+    this.redrawAcceptedStrokes();
+    this.updateHighlight();
   }
 
-  undoStroke() {
-    if (this.strokeIndex > 0) {
-      this.strokeIndex--;
-      this.acceptedStrokes.pop();
-      this.redrawAcceptedStrokes();
-      this.updateHighlight();
-    }
-  }
+  complete() {
+    this.isComplete = true;
+    this.showFeedback('できた！', 900);
 
-  skipCard() {
-    this.showRating(RATING.AGAIN);
-  }
+    // Persist progress.
+    const char = this.sequence[this.index];
+    const updated = recordPractice(this.progress[char], this.cleanRun);
+    updated.id = char;
+    this.progress[char] = updated;
+    Storage.saveProgress(this.progress);
 
-  showCompletion() {
-    this.showFeedback('Great!', 600);
-    const card = this.queue[this.currentIndex];
-    const stats = this.sessionStats.get(card.id);
-    const suggested = suggestRating(card, stats);
-    this.showRating(suggested);
-  }
-
-  showRating(highlightRating) {
+    // Show result buttons. "Next" only after a clean run.
     this.studyControls.style.display = 'none';
-    this.ratingButtons.style.display = 'flex';
-    this.ratingButtons.querySelectorAll('.rating-btn').forEach(btn => {
-      const r = parseInt(btn.dataset.rating, 10);
-      btn.style.outline = r === highlightRating ? '2px solid var(--primary)' : 'none';
-      btn.style.outlineOffset = '2px';
-    });
+    this.resultButtons.style.display = 'flex';
+    const nextBtn = this.container.querySelector('#btn-next');
+    nextBtn.style.display = this.cleanRun ? 'inline-flex' : 'none';
   }
 
-  rateCard(rating) {
-    const card = this.queue[this.currentIndex];
-    schedule(card, rating);
-
-    // Persist
-    const idx = this.cards.findIndex(c => c.id === card.id);
-    if (idx >= 0) this.cards[idx] = card;
-    else this.cards.push(card);
-    Storage.saveCards(this.cards);
-
-    this.loadCard(this.currentIndex + 1);
+  next() {
+    if (this.index + 1 >= this.sequence.length) {
+      this.onExit();
+      return;
+    }
+    this.loadCharacter(this.index + 1);
   }
 
-  finishSession() {
-    this.container.innerHTML = `
-      <div class="empty-state">
-        <h3>Session Complete!</h3>
-        <p>You reviewed ${this.queue.length} cards.</p>
-        <button class="btn btn-primary btn-large" id="btn-finish">Back to Dashboard</button>
-      </div>
-    `;
-    this.container.querySelector('#btn-finish').addEventListener('click', () => {
-      if (this.onComplete) this.onComplete();
-    });
+  repeat() {
+    this.loadCharacter(this.index);
   }
 }

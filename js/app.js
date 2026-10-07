@@ -13,7 +13,7 @@ async function loadData() {
 }
 
 function setActiveNav(id) {
-  document.querySelectorAll('.nav-btn').forEach(btn => {
+  document.querySelectorAll('.nav-btn').forEach((btn) => {
     btn.classList.toggle('active', btn.id === id);
   });
 }
@@ -28,14 +28,19 @@ function cleanupView() {
 async function showDashboard() {
   cleanupView();
   setActiveNav('nav-dashboard');
-  currentView = new Dashboard(main, hiraganaData, () => { location.hash = 'study'; });
+  currentView = new Dashboard(main, hiraganaData, (char) => {
+    location.hash = char ? `practice/${encodeURIComponent(char)}` : 'practice';
+  });
   await currentView.init();
 }
 
-async function showStudy() {
+async function showPractice(startChar) {
   cleanupView();
-  setActiveNav('nav-study');
-  currentView = new StudyView(main, hiraganaData, () => { location.hash = 'dashboard'; });
+  setActiveNav('nav-practice');
+  currentView = new StudyView(main, hiraganaData, {
+    startChar: startChar || null,
+    onExit: () => { location.hash = 'dashboard'; },
+  });
   await currentView.init();
 }
 
@@ -47,9 +52,14 @@ async function showSettings() {
 }
 
 function route() {
-  const hash = location.hash.replace('#', '') || 'dashboard';
+  const hash = location.hash.replace(/^#/, '') || 'dashboard';
+  if (hash.startsWith('practice')) {
+    const rest = hash.slice('practice'.length);
+    const char = rest.startsWith('/') ? decodeURIComponent(rest.slice(1)) : null;
+    showPractice(char);
+    return;
+  }
   switch (hash) {
-    case 'study': showStudy(); break;
     case 'settings': showSettings(); break;
     default: showDashboard(); break;
   }
@@ -64,13 +74,12 @@ async function main_init() {
   }
 
   document.getElementById('nav-dashboard').addEventListener('click', () => { location.hash = 'dashboard'; });
-  document.getElementById('nav-study').addEventListener('click', () => { location.hash = 'study'; });
+  document.getElementById('nav-practice').addEventListener('click', () => { location.hash = 'practice'; });
   document.getElementById('nav-settings').addEventListener('click', () => { location.hash = 'settings'; });
 
   window.addEventListener('hashchange', route);
   route();
 
-  // Register service worker for offline support (PWA).
   if ('serviceWorker' in navigator) {
     window.addEventListener('load', () => {
       navigator.serviceWorker.register('sw.js').catch(() => {
