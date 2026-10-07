@@ -143,20 +143,12 @@ export class StudyView {
     // Outer box
     ctx.strokeRect(2, 2, VIEWBOX - 4, VIEWBOX - 4);
 
-    // Center cross
+    // Center cross (vertical + horizontal divisions only)
     ctx.beginPath();
     ctx.moveTo(VIEWBOX / 2, 2);
     ctx.lineTo(VIEWBOX / 2, VIEWBOX - 2);
     ctx.moveTo(2, VIEWBOX / 2);
     ctx.lineTo(VIEWBOX - 2, VIEWBOX / 2);
-    ctx.stroke();
-
-    // Diagonals
-    ctx.beginPath();
-    ctx.moveTo(2, 2);
-    ctx.lineTo(VIEWBOX - 2, VIEWBOX - 2);
-    ctx.moveTo(VIEWBOX - 2, 2);
-    ctx.lineTo(2, VIEWBOX - 2);
     ctx.stroke();
   }
 
