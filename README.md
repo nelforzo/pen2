@@ -123,10 +123,12 @@ only the first segment for direction (the naive approach) is too noisy for curvy
 strokes like あ's third stroke; sampling at 25% of the stroke length fixed a real
 bug where a *perfectly traced* あ stroke scored 0.60 (just below threshold).
 
-Thresholds per mode: **trace 0.62 · guided 0.72 · recall 0.78**. Thresholds are
-global rather than per-character: resampling normalizes stroke length, so longer
-strokes do not need looser tolerance. This can be revisited if per-character
-tuning proves necessary.
+Thresholds per mode: **trace 0.50 · guided 0.58 · recall 0.62** (lowered ~20%
+from the original 0.62/0.72/0.78 to make recognition more forgiving). A stroke
+also only needs a minimum of **2 captured points** to be considered. Thresholds
+are global rather than per-character: resampling normalizes stroke length, so
+longer strokes do not need looser tolerance. This can be revisited if
+per-character tuning proves necessary.
 
 ### 5. Rendering — SVG (reference) + Canvas (drawing) hybrid
 **Suggested:** SVG vs. Canvas for the shadow.

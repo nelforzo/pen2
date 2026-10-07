@@ -397,7 +397,9 @@ export class StudyView {
 
   endStroke() {
     this.isDrawing = false;
-    if (this.currentStroke.length < 3) {
+    // Require at least 2 captured points for a stroke (lowered from 3 to make
+    // recognition more lenient on short/fast strokes).
+    if (this.currentStroke.length < 2) {
       this.currentStroke = [];
       this.redrawAcceptedStrokes();
       return;

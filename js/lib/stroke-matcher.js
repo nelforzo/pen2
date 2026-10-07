@@ -147,10 +147,12 @@ export function matchStroke(userPoints, refPathData, options = {}) {
 }
 
 export function getThresholdForMode(mode) {
+  // Thresholds lowered ~20% from the original values (0.62 / 0.72 / 0.78)
+  // to make stroke recognition more forgiving.
   switch (mode) {
-    case 'trace': return 0.62;
-    case 'guided': return 0.72;
-    case 'recall': return 0.78;
-    default: return 0.72;
+    case 'trace': return 0.50;
+    case 'guided': return 0.58;
+    case 'recall': return 0.62;
+    default: return 0.58;
   }
 }
