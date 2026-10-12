@@ -7,9 +7,26 @@ import { Storage } from './lib/storage.js';
 const main = document.getElementById('main-content');
 const menuToggle = document.getElementById('menu-toggle');
 const menuList = document.getElementById('menu-list');
+const starCounter = document.getElementById('star-counter');
 
 let currentView = null;
 const dataCache = {};
+
+// Total ★ across every deck (only "clean" entries). Cleared by the same daily
+// reset as the per-deck marks.
+async function updateStarCounter() {
+  let total = 0;
+  for (const section of Object.values(SECTIONS)) {
+    const progress = await Storage.getProgress(section.id);
+    for (const entry of Object.values(progress)) {
+      if (entry && entry.clean) total += 1;
+    }
+  }
+  if (!starCounter) return;
+  starCounter.textContent = `★ ${total}`;
+  starCounter.setAttribute('aria-label', `ほし ${total}こ`);
+  starCounter.classList.toggle('has-stars', total > 0);
+}
 
 async function loadSectionData(section) {
   if (dataCache[section.id]) return dataCache[section.id];
@@ -117,6 +134,8 @@ async function main_init() {
   await Storage.resetProgressDaily(
     Object.values(SECTIONS).map((s) => Storage.progressKey(s.id))
   );
+  await updateStarCounter();
+  document.addEventListener('pen2:progresschanged', updateStarCounter);
 
   window.addEventListener('hashchange', route);
   route();

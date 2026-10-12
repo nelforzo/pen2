@@ -18,17 +18,20 @@
   <div id="app">
     <header class="app-header">
       <h1>pen2</h1>
-      <div class="menu">
-        <button id="menu-toggle" class="menu-toggle" aria-label="メニュー"
-                aria-expanded="false" aria-haspopup="true">
-          <span></span><span></span><span></span>
-        </button>
-        <nav id="menu-list" class="menu-list" hidden aria-label="スクリプト">
-          <button class="menu-item" data-section="hiragana">ひらがな</button>
-          <button class="menu-item" data-section="katakana">カタカナ</button>
-          <button class="menu-item" data-section="english">ABC</button>
-          <button class="menu-item" data-section="numbers">123</button>
-        </nav>
+      <div class="header-actions">
+        <div class="star-counter" id="star-counter" aria-live="polite" aria-label="ほし 0こ">★ 0</div>
+        <div class="menu">
+          <button id="menu-toggle" class="menu-toggle" aria-label="メニュー"
+                  aria-expanded="false" aria-haspopup="true">
+            <span></span><span></span><span></span>
+          </button>
+          <nav id="menu-list" class="menu-list" hidden aria-label="スクリプト">
+            <button class="menu-item" data-section="hiragana">ひらがな</button>
+            <button class="menu-item" data-section="katakana">カタカナ</button>
+            <button class="menu-item" data-section="english">ABC</button>
+            <button class="menu-item" data-section="numbers">123</button>
+          </nav>
+        </div>
       </div>
     </header>
 

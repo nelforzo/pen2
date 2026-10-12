@@ -80,6 +80,27 @@ html, body {
   border-color: var(--primary-light);
 }
 
+/* Header actions (star counter + hamburger menu) */
+.header-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.star-counter {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.2rem;
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--text-muted);
+  font-variant-numeric: tabular-nums;
+}
+
+.star-counter.has-stars {
+  color: var(--accent);
+}
+
 /* Hamburger menu */
 .menu {
   position: relative;

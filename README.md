@@ -51,10 +51,11 @@ node scripts/build-numbers.js
   (numbers), with 46 kana per kana deck (no dakuten/handakuten or small kana).
 - **English case toggle**: the えいご deck has **大文字**/**小文字** buttons that
   switch between uppercase A–Z and lowercase a–z; the choice is remembered.
-- **Numbers 0–100**: the すうじ deck is grouped into sections (**0–9**, **10–19**,
-  …, **90–99**, **100**) with a play button on each group. Every number is
+- **Numbers 1–100**: the すうじ deck is grouped into sections (**1–10**,
+  **11–20**, …, **91–100**) with a play button on each group. Every number is
   traceable: a multi-digit number is composed from its digits and practised
-  stroke by stroke, left to right.
+  stroke by stroke, left to right. Zero has no card of its own — it is practised
+  inside 10, 20, … 100.
 - **Hamburger menu** in the header to switch between decks (ひらがな, カタカナ,
   ABC, 123).
 - **Stroke-by-stroke writing** with a shadow and numbered stroke order for guidance,
@@ -74,9 +75,12 @@ node scripts/build-numbers.js
   or start from the beginning and continue through the set.
 - **Simple progress** (no scheduling): each character is marked practised (✓) or
   **かんぺき / perfect** (★) when written with no mistakes.
-- **Fresh start every day**: the saved ✓/★ marks are cleared automatically on the
-  first load of each local day, so children can collect stars again. A red **↻**
-  button on each deck also resets immediately on demand.
+- **Star counter**: the header shows a running total of every ★ earned across all
+  decks, so children can watch their collection grow.
+- **Fresh start every day**: the saved ✓/★ marks (and the star counter) are
+  cleared automatically on the first load of each local day, so children can
+  collect stars again. A red **↻** button on each deck also resets immediately on
+  demand.
 - **All controls labelled in Japanese** for young learners.
 - **Voice reading**: each character's name is read aloud when it appears and when
   the **?** stroke-order demo is played (Web Speech API).

@@ -447,6 +447,7 @@ export class StudyView {
     updated.id = char;
     this.progress[char] = updated;
     Storage.saveProgress(this.section.id, this.progress);
+    document.dispatchEvent(new CustomEvent('pen2:progresschanged'));
 
     // All strokes are registered, so the child may advance regardless of
     // whether the first attempt was clean. cleanRun still earns a ★.

@@ -23,19 +23,15 @@ function numberToJapanese(n) {
   return 'ひゃく';
 }
 
-// The numbers deck is shown as manageable sections (0–9, 10–19, … 90–99, 100)
-// rather than one long grid of 101 cards.
-const NUMBER_GROUPS = [
-  { label: '0〜9', chars: Array.from({ length: 10 }, (_, i) => String(i)) },
-];
-for (let tens = 1; tens <= 9; tens++) {
-  const start = tens * 10;
+// The numbers deck is grouped as 1–10, 11–20, … 91–100 (ten groups of ten).
+// Zero has no card of its own — it is practised inside 10, 20, … 100.
+const NUMBER_GROUPS = [];
+for (let start = 1; start <= 91; start += 10) {
   NUMBER_GROUPS.push({
     label: `${start}〜${start + 9}`,
     chars: Array.from({ length: 10 }, (_, i) => String(start + i)),
   });
 }
-NUMBER_GROUPS.push({ label: '100', chars: ['100'] });
 
 /**
  * The four practice sections shown in the main menu. Each one is a full
@@ -72,9 +68,9 @@ export const SECTIONS = {
     id: 'numbers',
     label: 'すうじ',
     dataFile: 'js/data/numbers.json',
-    // Every number 0–100 has stroke data; multi-digit numbers are composed
+    // Every number 1–100 has stroke data; multi-digit numbers are composed
     // from their digits (left to right) by scripts/build-numbers.js.
-    chars: Array.from({ length: 101 }, (_, i) => String(i)),
+    chars: Array.from({ length: 100 }, (_, i) => String(i + 1)),
     groups: NUMBER_GROUPS,
     speechLang: 'ja-JP',
     speechText: (char) => numberToJapanese(parseInt(char, 10)),
