@@ -64,8 +64,12 @@ node scripts/build-numbers.js
 - **Controls under each character**:
   - **?** — replay the stroke order (demo strokes drawn in a distinct colour).
   - **↻** — restart the current character.
-  - **→** — advance, enabled once all strokes are registered (contrasts with the
-    top-left **←** back button, which returns to the character list).
+  - **→** — advance, enabled once all strokes are registered, or immediately when
+    the character already has a pass mark (contrasts with the top-left **←** back
+    button, which returns to the character list).
+- **Pass mark in practice**: the same ✓/★ shown on the character list appears at
+  the top-right of the practice screen — on the back button's line — so children
+  can see their star without leaving practice.
 - **Focused practice**: tap any character on the dashboard to practise just that one;
   or start from the beginning and continue through the set.
 - **Simple progress** (no scheduling): each character is marked practised (✓) or

@@ -1,6 +1,6 @@
 import { Storage } from '../lib/storage.js';
 import { matchStroke, getThresholdForMode, samplePath, isDotMark } from '../lib/stroke-matcher.js';
-import { recordPractice } from '../lib/progress.js';
+import { recordPractice, isPracticed, isClean } from '../lib/progress.js';
 import { speak } from '../lib/speech.js';
 
 const VIEWBOX = 109;
@@ -75,6 +75,7 @@ export class StudyView {
     this.container.innerHTML = `
       <div class="study-view">
         <button class="btn btn-secondary study-back" id="btn-back" aria-label="もどる">←</button>
+        <div class="study-status" id="study-status" aria-live="polite"></div>
         <div class="study-prompt">
           <div class="reading" id="prompt-reading" aria-live="polite"></div>
         </div>
@@ -114,6 +115,7 @@ export class StudyView {
     this.progressEl = this.container.querySelector('#study-progress');
     this.strokeInfo = this.container.querySelector('#stroke-info');
     this.studyControls = this.container.querySelector('#study-controls');
+    this.statusEl = this.container.querySelector('#study-status');
     this.nextBtn = this.container.querySelector('#btn-next');
 
     this.setupHiDPI();
@@ -188,11 +190,14 @@ export class StudyView {
     this._keyHandler = (e) => {
       if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
       const key = e.key.toLowerCase();
+      // Next is available once the character is complete or already passed.
+      if (!this.nextBtn.disabled && (key === 'n' || key === 'arrowright')) {
+        e.preventDefault();
+        this.next();
+        return;
+      }
       if (this.isComplete) {
-        if (!this.nextBtn.disabled && (key === 'n' || key === 'arrowright')) {
-          e.preventDefault();
-          this.next();
-        } else if (key === 'r') { e.preventDefault(); this.repeat(); }
+        if (key === 'r') { e.preventDefault(); this.repeat(); }
         return;
       }
       if (key === 'c') { e.preventDefault(); this.resetStrokes(); }
@@ -261,7 +266,29 @@ export class StudyView {
     `;
     this.progressEl.textContent = `${this.index + 1} / ${this.sequence.length}`;
     this.strokeInfo.textContent = `Stroke ${this.strokeIndex + 1} of ${this.charData?.paths.length || 0}`;
-    this.nextBtn.disabled = true;
+    // A character that already has a pass mark (✓/★) can be skipped, so the
+    // child can move on without redrawing it.
+    this.nextBtn.disabled = !this.hasPassed(this.progress[char]);
+    this.updateStatusBadge();
+  }
+
+  hasPassed(entry) {
+    return isPracticed(entry) || isClean(entry);
+  }
+
+  updateStatusBadge() {
+    if (!this.statusEl) return;
+    const char = this.sequence[this.index];
+    const entry = this.progress[char];
+    const clean = isClean(entry);
+    const done = isPracticed(entry);
+    this.statusEl.textContent = clean ? '★' : done ? '✓' : '';
+    this.statusEl.classList.toggle('clean', clean);
+    this.statusEl.classList.toggle('practiced', done && !clean);
+    this.statusEl.setAttribute(
+      'aria-label',
+      clean ? 'かんぺき' : done ? 'れんしゅうずみ' : ''
+    );
   }
 
   getRomaji(char) {
@@ -424,6 +451,7 @@ export class StudyView {
     // All strokes are registered, so the child may advance regardless of
     // whether the first attempt was clean. cleanRun still earns a ★.
     this.nextBtn.disabled = false;
+    this.updateStatusBadge();
   }
 
   playStrokeOrder() {

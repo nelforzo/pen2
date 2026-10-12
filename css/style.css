@@ -458,6 +458,36 @@ html, body {
   z-index: 2;
 }
 
+/* In-practice pass mark (✓/★), mirroring the back button on the right. */
+.study-status {
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 44px;
+  height: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.75rem;
+  line-height: 1;
+  z-index: 2;
+  pointer-events: none;
+}
+
+.study-status.practiced { color: var(--primary); }
+.study-status.clean { color: var(--accent); }
+
+.study-status.practiced,
+.study-status.clean {
+  animation: status-pop 0.35s ease-out;
+}
+
+@keyframes status-pop {
+  0% { transform: scale(0.3); opacity: 0; }
+  60% { transform: scale(1.25); opacity: 1; }
+  100% { transform: scale(1); }
+}
+
 .study-prompt {
   text-align: center;
 }
