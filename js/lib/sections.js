@@ -31,6 +31,8 @@ export const SECTIONS = {
     dataFile: 'js/data/alphabet.json',
     chars: STANDARD_ENGLISH.split(''),
     speechLang: 'en-US',
+    // Lowercase so TTS reads the letter name ("ay") rather than "capital A".
+    speechText: (char) => char.toLowerCase(),
     showRomaji: false,
   },
 };

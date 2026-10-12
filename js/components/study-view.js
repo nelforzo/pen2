@@ -239,7 +239,9 @@ export class StudyView {
   speakCharacter() {
     if (this.settings.speak === false) return;
     const char = this.sequence[this.index];
-    if (char) speak(char, { lang: this.section.speechLang });
+    if (!char) return;
+    const text = this.section.speechText ? this.section.speechText(char) : char;
+    speak(text, { lang: this.section.speechLang });
   }
 
   updateUI() {
