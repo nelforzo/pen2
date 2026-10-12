@@ -314,6 +314,10 @@ html, body {
   background: var(--surface);
   overflow: hidden;
   touch-action: none;
+  /* Never let iOS treat the drawing area as selectable content. */
+  -webkit-user-select: none;
+  user-select: none;
+  -webkit-touch-callout: none;
 }
 
 .drawing-container svg {
@@ -353,6 +357,10 @@ html, body {
   width: 100%;
   height: 100%;
   cursor: crosshair;
+  -webkit-user-select: none;
+  user-select: none;
+  -webkit-touch-callout: none;
+  -webkit-user-drag: none;
 }
 
 .study-controls {

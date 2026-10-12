@@ -66,6 +66,18 @@ function route() {
 }
 
 async function main_init() {
+  // iOS Safari ignores user-scalable=no, so block pinch-zoom gestures directly.
+  ['gesturestart', 'gesturechange', 'gestureend'].forEach((evt) => {
+    document.addEventListener(evt, (e) => e.preventDefault(), { passive: false });
+  });
+  document.addEventListener(
+    'touchmove',
+    (e) => {
+      if (e.touches.length > 1) e.preventDefault();
+    },
+    { passive: false }
+  );
+
   try {
     hiraganaData = await loadData();
   } catch (e) {

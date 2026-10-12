@@ -390,8 +390,9 @@ export class StudyView {
     this.progress[char] = updated;
     Storage.saveProgress(this.progress);
 
-    // "Next" only becomes active after a clean run.
-    this.nextBtn.disabled = !this.cleanRun;
+    // All strokes are registered, so the child may advance regardless of
+    // whether the first attempt was clean. cleanRun still earns a ★.
+    this.nextBtn.disabled = false;
   }
 
   playStrokeOrder() {
@@ -401,7 +402,7 @@ export class StudyView {
     this.isAnimating = true;
 
     const svgPaths = Array.from(this.shadowGroup.querySelectorAll('.shadow-path'));
-    const strokeDuration = 600;
+    const strokeDuration = 1200; // slow enough for a child to follow the order
 
     const drawStroke = (index) => {
       if (token !== this._animationToken) return;
