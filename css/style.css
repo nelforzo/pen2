@@ -338,6 +338,41 @@ html, body {
 }
 .card-item.done-clean .card-mark { color: var(--accent); }
 
+/* Case Toggle (English section) */
+.case-toggle {
+  display: flex;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+}
+
+.case-btn {
+  appearance: none;
+  -webkit-appearance: none;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  padding: 0.5rem 1rem;
+  border-radius: var(--radius);
+  font: inherit;
+  font-size: 0.9375rem;
+  font-weight: 500;
+  color: var(--text-muted);
+  cursor: pointer;
+  transition: all 0.15s;
+  flex: 1;
+  text-align: center;
+}
+
+.case-btn:hover {
+  background: var(--bg);
+}
+
+.case-btn.active {
+  background: var(--primary-light);
+  border-color: var(--primary-light);
+  color: var(--primary);
+  font-weight: 600;
+}
+
 /* Study View */
 .study-view {
   position: relative;

@@ -14,6 +14,7 @@ export const STANDARD_KATAKANA =
   'アイウエオカキクケコサシスセソタチツテトナニヌネノハヒフヘホマミムメモヤユヨラリルレロワヲン';
 
 export const STANDARD_ENGLISH = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+export const STANDARD_ENGLISH_LOWER = 'abcdefghijklmnopqrstuvwxyz';
 
 export function standardCharacters() {
   return STANDARD_HIRAGANA.split('');

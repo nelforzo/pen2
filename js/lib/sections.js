@@ -2,6 +2,7 @@ import {
   STANDARD_HIRAGANA,
   STANDARD_KATAKANA,
   STANDARD_ENGLISH,
+  STANDARD_ENGLISH_LOWER,
 } from './progress.js';
 
 /**
@@ -29,7 +30,7 @@ export const SECTIONS = {
     id: 'english',
     label: 'えいご',
     dataFile: 'js/data/alphabet.json',
-    chars: STANDARD_ENGLISH.split(''),
+    chars: [...STANDARD_ENGLISH.split(''), ...STANDARD_ENGLISH_LOWER.split('')],
     speechLang: 'en-US',
     // Lowercase so TTS reads the letter name ("ay") rather than "capital A".
     speechText: (char) => char.toLowerCase(),
