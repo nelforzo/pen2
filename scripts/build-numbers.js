@@ -52,10 +52,10 @@ const DIGITS = {
     numbers: [[1, 16, 9], [2, 92, 20]]
   },
   8: {
-    // Start at the top, draw the upper loop down to the centre, the lower
-    // loop, then back up the right side of the upper loop.
-    paths: ['M54,14 Q28,14 28,31 Q28,50 54,50 Q28,50 28,73 Q28,96 54,96 Q80,96 80,73 Q80,50 54,50 Q80,50 80,31 Q80,14 54,14'],
-    numbers: [[1, 46, 9]]
+    // Start at the centre: up the left side of the upper loop, back to the
+    // centre, then around the lower loop and back.
+    paths: ['M54,50 Q28,50 28,31 Q28,14 54,14 Q80,14 80,31 Q80,50 54,50 Q22,50 22,73 Q22,96 54,96 Q86,96 86,73 Q86,50 54,50'],
+    numbers: [[1, 54, 40]]
   },
   9: {
     paths: [
