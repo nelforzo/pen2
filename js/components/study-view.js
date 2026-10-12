@@ -8,6 +8,12 @@ const VIEWBOX = 109;
 // Recognition thresholds are fairly forgiving — this is for young learners.
 const TRACE_THRESHOLD = getThresholdForMode('trace');
 
+// Stroke-order demo speed, in viewBox units per millisecond. Computing the
+// duration from each stroke's length (instead of a fixed time per stroke)
+// keeps short and long strokes animating at the same gentle pace.
+const DEMO_SPEED = 0.07; // ~70 units per second
+const DEMO_MIN_DURATION = 500; // ms — keep very short strokes visible
+
 // Romaji readings for the standard hiragana. Katakana readings are derived by
 // shifting each hiragana codepoint by 0x60 (あ→ア, を→ヲ, ん→ン, …).
 const HIRAGANA_ROMAJI = {
@@ -425,7 +431,6 @@ export class StudyView {
     this.isAnimating = true;
 
     const svgPaths = Array.from(this.shadowGroup.querySelectorAll('.shadow-path'));
-    const strokeDuration = 1200; // slow enough for a child to follow the order
 
     const drawStroke = (index) => {
       if (token !== this._animationToken) return;
@@ -435,6 +440,9 @@ export class StudyView {
       }
       const pathEl = svgPaths[index];
       const total = pathEl.getTotalLength();
+      // Longer strokes take proportionally longer so the pen moves at a
+      // constant speed.
+      const strokeDuration = Math.max(DEMO_MIN_DURATION, total / DEMO_SPEED);
       const start = performance.now();
 
       const step = (now) => {
