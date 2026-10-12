@@ -91,8 +91,8 @@ export class StudyView {
 
         <div class="study-controls" id="study-controls" role="group" aria-label="そうさ">
           <button class="btn btn-secondary" id="btn-replay" aria-label="hint">?</button>
-          <button class="btn btn-secondary" id="btn-redo">やりなおす</button>
-          <button class="btn btn-primary" id="btn-next" disabled>つぎへ</button>
+          <button class="btn btn-secondary" id="btn-redo" aria-label="やりなおす">↻</button>
+          <button class="btn btn-primary" id="btn-next" disabled aria-label="つぎへ">→</button>
         </div>
       </div>
     `;

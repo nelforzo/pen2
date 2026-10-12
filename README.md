@@ -54,14 +54,17 @@ node scripts/build-numbers.js
 - **Numbers 0–100**: the すうじ deck practises writing digits **0–9**; numbers
   **10–100** are shown as dashed, read-only cards that speak their Japanese
   reading when tapped.
-- **Hamburger menu** in the header to switch between decks.
+- **Hamburger menu** in the header to switch between decks (ひらがな, カタカナ,
+  ABC, 123).
 - **Stroke-by-stroke writing** with a shadow and numbered stroke order for guidance,
   and gentle "もう いちど" (try again) feedback on misses.
+- **Dashboard actions**: a green **▶** button starts practice from the beginning;
+  a red **↻** button resets the deck's saved progress.
 - **Controls under each character**:
   - **?** — replay the stroke order (demo strokes drawn in a distinct colour).
-  - **やりなおす** — restart the current character.
-  - **つぎへ** — advance, enabled once all strokes are registered.
-  - A compact top-left **←** button returns to the character list.
+  - **↻** — restart the current character.
+  - **→** — advance, enabled once all strokes are registered (contrasts with the
+    top-left **←** back button, which returns to the character list).
 - **Focused practice**: tap any character on the dashboard to practise just that one;
   or start from the beginning and continue through the set.
 - **Simple progress** (no scheduling): each character is marked practised (✓) or

@@ -233,6 +233,7 @@ html, body {
   border: 1px solid transparent;
   border-radius: var(--radius);
   font-size: 0.9375rem;
+  line-height: 1;
   font-weight: 500;
   cursor: pointer;
   transition: all 0.15s;
@@ -264,6 +265,24 @@ html, body {
 
 .btn-secondary:hover {
   background: var(--bg);
+}
+
+.btn-accent {
+  background: var(--accent);
+  color: white;
+}
+
+.btn-accent:hover {
+  filter: brightness(0.95);
+}
+
+.btn-danger {
+  background: var(--danger);
+  color: white;
+}
+
+.btn-danger:hover {
+  filter: brightness(0.95);
 }
 
 .btn-large {

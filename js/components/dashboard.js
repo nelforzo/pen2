@@ -60,7 +60,7 @@ export class Dashboard {
     this.container.innerHTML = `
       <div class="dashboard">
         <div class="deck-actions">
-          <button class="btn btn-primary btn-large" id="btn-study">はじめから れんしゅう</button>
+          <button class="btn btn-accent btn-large" id="btn-study" aria-label="はじめから れんしゅう">▶</button>
         </div>
 
         <h3 class="deck-heading">ぜんぶの ${this.section.label}（${total}）</h3>
@@ -71,7 +71,7 @@ export class Dashboard {
         </div>
 
         <div class="deck-actions" style="margin-top:1.5rem">
-          <button class="btn btn-secondary" id="btn-reset">さいしょから</button>
+          <button class="btn btn-danger" id="btn-reset" aria-label="さいしょから">↻</button>
         </div>
       </div>
     `;
