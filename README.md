@@ -69,6 +69,9 @@ node scripts/build-numbers.js
   or start from the beginning and continue through the set.
 - **Simple progress** (no scheduling): each character is marked practised (✓) or
   **かんぺき / perfect** (★) when written with no mistakes.
+- **Fresh start every day**: the saved ✓/★ marks are cleared automatically on the
+  first load of each local day, so children can collect stars again. A red **↻**
+  button on each deck also resets immediately on demand.
 - **All controls labelled in Japanese** for young learners.
 - **Voice reading**: each character's name is read aloud when it appears and when
   the **?** stroke-order demo is played (Web Speech API).
@@ -131,7 +134,9 @@ a clean run still earns a ★.
 Progress is a tiny per-character record (`{ practiced, clean, attempts }`) in
 `js/lib/progress.js`, persisted to `localStorage` behind an async wrapper
 (`js/lib/storage.js`). A character shown with ✓ was practised; ★ means it was
-written with no mistakes.
+written with no mistakes. `Storage.resetProgressDaily()` clears every deck's
+progress on the first launch of each local day (stamped by
+`Storage.today()`), independent of the manual **↻** reset.
 
 ### 4. Stroke recognition — normalized point-cloud matcher (not full `$1`)
 **Suggested:** hand-rolled Euclidean, or `$1`/`$P`/DTW.
@@ -154,8 +159,19 @@ bug where a *perfectly traced* あ stroke scored 0.60 (just below threshold).
 
 Since the app now targets young children, a single forgiving threshold is used
 (**0.50**, the former "trace" value), and a stroke only needs a minimum of
-**2 captured points**. Recognition is intentionally lenient — the goal is
-encouragement, not strict grading.
+**2 captured points** (or **1** for a dot). Recognition is intentionally
+lenient — the goal is encouragement, not strict grading.
+
+**Dot strokes are matched by position, not shape.** Some characters end with a
+dot — the dots on lowercase **i** and **j** today, and dakuten/handakuten marks
+later. Tiny circles are very hard to draw accurately, even with a stylus, so a
+reference stroke whose sampled bounding box is under **13 viewBox units** is
+treated as a *dot*. For a dot, the app accepts *any* reasonably small mark — a
+single tap, a tick, or a circle — whose centre falls within **24 units** of the
+reference dot, ignoring shape and direction. The `y` descender (~15.6 units) is
+deliberately kept above the threshold so it is still matched by shape. These
+constants live at the top of `js/lib/stroke-matcher.js`
+(`DOT_MAX_DIAGONAL`, `DOT_ACCEPT_RADIUS`, `DOT_MAX_USER_DIAGONAL`).
 
 ### 5. Rendering — SVG (reference) + Canvas (drawing) hybrid
 **Suggested:** SVG vs. Canvas for the shadow.

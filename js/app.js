@@ -2,6 +2,7 @@ import { Dashboard } from './components/dashboard.js';
 import { StudyView } from './components/study-view.js';
 import { SECTIONS, DEFAULT_SECTION, getSection } from './lib/sections.js';
 import { unlockSpeech } from './lib/speech.js';
+import { Storage } from './lib/storage.js';
 
 const main = document.getElementById('main-content');
 const menuToggle = document.getElementById('menu-toggle');
@@ -111,6 +112,11 @@ async function main_init() {
   document.addEventListener('click', (e) => {
     if (!e.target.closest('.menu')) closeMenu();
   });
+
+  // Start each local day with a fresh deck so children can collect new stars.
+  await Storage.resetProgressDaily(
+    Object.values(SECTIONS).map((s) => Storage.progressKey(s.id))
+  );
 
   window.addEventListener('hashchange', route);
   route();

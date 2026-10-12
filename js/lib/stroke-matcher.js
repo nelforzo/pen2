@@ -5,6 +5,18 @@
 
 const SAMPLE_COUNT = 64;
 
+// A reference stroke whose sampled bounding box is smaller than this (in
+// viewBox units) is treated as a "dot" — e.g. the dots on i and j. Dots are
+// tiny and hard to reproduce exactly, so they get a lenient, shape-agnostic
+// match (see matchDot). Kept below the size of small real strokes (e.g. the
+// tail of y, ~15.6 units) so those are still matched by shape.
+const DOT_MAX_DIAGONAL = 13;
+// A drawn mark counts as a dot if its centre is within this many viewBox units
+// of the reference dot's centre...
+const DOT_ACCEPT_RADIUS = 24;
+// ...and the mark itself isn't a long stroke.
+const DOT_MAX_USER_DIAGONAL = 50;
+
 // Hidden SVG for path sampling
 let samplerSvg = null;
 
@@ -86,6 +98,47 @@ export function resample(points, count = SAMPLE_COUNT) {
   return result;
 }
 
+function bounds(points) {
+  let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
+  for (const p of points) {
+    if (p.x < minX) minX = p.x;
+    if (p.y < minY) minY = p.y;
+    if (p.x > maxX) maxX = p.x;
+    if (p.y > maxY) maxY = p.y;
+  }
+  const w = maxX - minX;
+  const h = maxY - minY;
+  return {
+    minX, minY, maxX, maxY,
+    cx: (minX + maxX) / 2,
+    cy: (minY + maxY) / 2,
+    diagonal: Math.hypot(w, h),
+  };
+}
+
+/** True when a sampled reference stroke is small enough to be a dot. */
+export function isDotMark(points) {
+  return bounds(points).diagonal <= DOT_MAX_DIAGONAL;
+}
+
+/**
+ * Forgiving match for dot strokes: any reasonably small mark whose centre is
+ * near the reference dot is accepted, whatever its shape or direction. This
+ * lets a child use a tick, a short line, or a single tap instead of a tiny
+ * circle.
+ */
+function matchDot(refSampled, userPoints) {
+  const ref = bounds(refSampled);
+  const user = bounds(userPoints);
+  const dist = Math.hypot(user.cx - ref.cx, user.cy - ref.cy);
+  const accepted =
+    user.diagonal <= DOT_MAX_USER_DIAGONAL && dist <= DOT_ACCEPT_RADIUS;
+  return {
+    similarity: accepted ? Math.max(0.9, 1 - dist / DOT_ACCEPT_RADIUS) : 0,
+    accepted,
+  };
+}
+
 function meanDistance(a, b) {
   let sum = 0;
   for (let i = 0; i < a.length; i++) {
@@ -116,7 +169,17 @@ export function matchStroke(userPoints, refPathData, options = {}) {
   const threshold = options.threshold ?? 0.75;
   const checkDirection = options.checkDirection !== false;
 
+  if (!userPoints || userPoints.length === 0) {
+    return { similarity: 0, accepted: false };
+  }
+
   const refSampled = samplePath(refPathData, SAMPLE_COUNT);
+
+  // Dots are matched leniently by position, not shape.
+  if (isDotMark(refSampled)) {
+    return matchDot(refSampled, userPoints);
+  }
+
   const userResampled = resample(userPoints, SAMPLE_COUNT);
 
   const refNorm = normalize(refSampled);

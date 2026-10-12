@@ -1,5 +1,5 @@
 import { Storage } from '../lib/storage.js';
-import { matchStroke, getThresholdForMode, samplePath } from '../lib/stroke-matcher.js';
+import { matchStroke, getThresholdForMode, samplePath, isDotMark } from '../lib/stroke-matcher.js';
 import { recordPractice } from '../lib/progress.js';
 import { speak } from '../lib/speech.js';
 
@@ -231,8 +231,10 @@ export class StudyView {
     this.isComplete = false;
     this.hintsUsed = 0;
 
-    // Pre-sample reference paths for recognition.
+    // Pre-sample reference paths for recognition. Dots (i/j, etc.) are flagged
+    // so a single tap or short tick can satisfy them.
     this.sampledPaths = this.charData ? this.charData.paths.map((p) => samplePath(p)) : [];
+    this.dotStrokes = this.sampledPaths.map((pts) => isDotMark(pts));
 
     this.updateUI();
     this.renderShadow();
@@ -356,7 +358,10 @@ export class StudyView {
 
   endStroke() {
     this.isDrawing = false;
-    if (this.currentStroke.length < 2) {
+    // A single point (tap) is enough for a dot stroke, but otherwise we need a
+    // real stroke to compare against the reference.
+    const isDot = this.dotStrokes && this.dotStrokes[this.strokeIndex];
+    if (this.currentStroke.length < 2 && !isDot) {
       this.currentStroke = [];
       this.redrawAcceptedStrokes();
       return;
