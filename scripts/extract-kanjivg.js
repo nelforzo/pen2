@@ -2,9 +2,10 @@
 // Extracts stroke data from KanjiVG SVGs.
 //
 // Usage:
-//   node scripts/extract-kanjivg.js            # both scripts
+//   node scripts/extract-kanjivg.js            # every script
 //   node scripts/extract-kanjivg.js hiragana   # only hiragana
 //   node scripts/extract-kanjivg.js katakana   # only katakana
+//   node scripts/extract-kanjivg.js alphabet   # only Latin A-Z / a-z
 const fs = require('fs');
 const path = require('path');
 
@@ -32,6 +33,13 @@ const KANAS = {
     'パ','ピ','プ','ペ','ポ',
     'ァ','ィ','ゥ','ェ','ォ','ャ','ュ','ョ','ッ','ヮ',
     'ヰ','ヱ'
+  ],
+  // KanjiVG also ships stroke data for the Latin alphabet (upper and lower).
+  alphabet: [
+    'A','B','C','D','E','F','G','H','I','J','K','L','M',
+    'N','O','P','Q','R','S','T','U','V','W','X','Y','Z',
+    'a','b','c','d','e','f','g','h','i','j','k','l','m',
+    'n','o','p','q','r','s','t','u','v','w','x','y','z'
   ]
 };
 
