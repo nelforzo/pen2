@@ -37,12 +37,23 @@ The English deck is hand-authored (KanjiVG has no Latin letters):
 node scripts/build-alphabet.js
 ```
 
+The numbers deck (digits 0–9) is also hand-authored:
+
+```bash
+node scripts/build-numbers.js
+```
+
 ---
 
 ## Features
 
-- **Three decks**: **ひらがな**, **カタカナ**, and **えいご** (uppercase A–Z), with
-  46 kana per kana deck (no dakuten/handakuten or small kana) and 26 letters.
+- **Four decks**: **ひらがな**, **カタカナ**, **えいご** (A–Z), and **すうじ**
+  (numbers), with 46 kana per kana deck (no dakuten/handakuten or small kana).
+- **English case toggle**: the えいご deck has **大文字**/**小文字** buttons that
+  switch between uppercase A–Z and lowercase a–z; the choice is remembered.
+- **Numbers 0–100**: the すうじ deck practises writing digits **0–9**; numbers
+  **10–100** are shown as dashed, read-only cards that speak their Japanese
+  reading when tapped.
 - **Hamburger menu** in the header to switch between decks.
 - **Stroke-by-stroke writing** with a shadow and numbered stroke order for guidance,
   and gentle "もう いちど" (try again) feedback on misses.
@@ -177,11 +188,13 @@ character and a ★ marks one written with no mistakes. Progress is stored per d
   pedagogically standard. `js/data/overrides.json` exists as a hook for a
   per-character override map; the current hiragana set matches expected counts
   (あ = 3 strokes), so no overrides are active yet.
-- **Deck contents.** Each deck shows the standard gojūon set (46 kana) or A–Z.
-  The bundled kana data files still contain all 83 kana (dakuten/handakuten and
-  small kana), so those can be surfaced later via `js/lib/sections.js`.
-- **English stroke data.** The A–Z paths are hand-authored simple shapes, not
-  school-verified stroke data.
+- **Deck contents.** Each deck shows the standard gojūon set (46 kana), A–Z
+  (upper/lower via the case toggle), or numbers 0–100. The bundled kana data
+  files still contain all 83 kana (dakuten/handakuten and small kana), so those
+  can be surfaced later via `js/lib/sections.js`.
+- **English & number stroke data.** The A–Z/a–z and 0–9 paths are hand-authored
+  simple shapes, not school-verified stroke data. Numbers 10–100 have no stroke
+  data and are read aloud instead.
 - **Accessibility.** Canvas drawing is inherently not screen-reader accessible. All
   non-canvas controls have ARIA labels, there is an `aria-live` status region for
   feedback, and full keyboard control of the practice actions. Zoom is intentionally
@@ -228,10 +241,12 @@ js/lib/
 js/data/
   hiragana.json             Extracted KanjiVG stroke data (CC BY-SA 3.0)
   katakana.json             Extracted KanjiVG stroke data (CC BY-SA 3.0)
-  alphabet.json             Hand-authored A–Z stroke data
+  alphabet.json             Hand-authored A–Z and a–z stroke data
+  numbers.json              Hand-authored 0–9 stroke data
   overrides.json            Pedagogical stroke-count override hook
 scripts/extract-kanjivg.js  Kana extraction from KanjiVG
-scripts/build-alphabet.js   A–Z data generator
+scripts/build-alphabet.js   A–Z / a–z data generator
+scripts/build-numbers.js    0–9 data generator
 ```
 
 ## Extending the decks

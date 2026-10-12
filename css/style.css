@@ -338,6 +338,22 @@ html, body {
 }
 .card-item.done-clean .card-mark { color: var(--accent); }
 
+/* Cards without stroke data (numbers 10–100) */
+.card-item.no-strokes {
+  background: var(--bg);
+  border-style: dashed;
+}
+
+.card-item.no-strokes .char {
+  color: var(--text-muted);
+  font-size: 1.75rem;
+}
+
+.card-item.no-strokes:hover,
+.card-item.no-strokes:focus-visible {
+  border-color: var(--accent);
+}
+
 /* Case Toggle (English section) */
 .case-toggle {
   display: flex;

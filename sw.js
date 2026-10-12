@@ -1,5 +1,5 @@
 // pen2 service worker — cache-first for the app shell so the app works offline.
-const CACHE_NAME = 'pen2-app-v2';
+const CACHE_NAME = 'pen2-app-v3';
 const APP_SHELL = [
   './',
   './index.html',
@@ -16,6 +16,7 @@ const APP_SHELL = [
   './js/data/hiragana.json',
   './js/data/katakana.json',
   './js/data/alphabet.json',
+  './js/data/numbers.json',
   './icons/icon-192.png',
   './icons/icon-512.png',
 ];
