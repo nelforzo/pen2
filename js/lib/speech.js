@@ -25,11 +25,13 @@ if (supported()) {
   window.speechSynthesis.addEventListener?.('voiceschanged', refreshVoices);
 }
 
-function japaneseVoice() {
+function voiceFor(lang) {
   if (!voices.length) refreshVoices();
+  const want = (lang || '').toLowerCase();
+  const wantPrefix = want.slice(0, 2);
   return (
-    voices.find((v) => v.lang === 'ja-JP') ||
-    voices.find((v) => (v.lang || '').toLowerCase().startsWith('ja')) ||
+    voices.find((v) => (v.lang || '').toLowerCase() === want) ||
+    voices.find((v) => (v.lang || '').toLowerCase().startsWith(wantPrefix)) ||
     null
   );
 }
@@ -70,10 +72,11 @@ export function speak(text, options = {}) {
     const synth = window.speechSynthesis;
     synth.cancel();
     const utterance = new SpeechSynthesisUtterance(text);
-    utterance.lang = options.lang || 'ja-JP';
+    const lang = options.lang || 'ja-JP';
+    utterance.lang = lang;
     utterance.rate = options.rate ?? 0.85;
     utterance.pitch = 1;
-    const voice = japaneseVoice();
+    const voice = voiceFor(lang);
     if (voice) utterance.voice = voice;
     synth.speak(utterance);
   } catch {

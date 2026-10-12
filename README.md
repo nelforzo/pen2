@@ -22,34 +22,42 @@ That's it. No `npm install`, no bundler, no compilation.
 
 ### Regenerating stroke data (optional)
 
-The bundled `js/data/hiragana.json` was generated from KanjiVG and is checked in.
-To regenerate:
+The bundled `js/data/hiragana.json` and `js/data/katakana.json` were generated
+from KanjiVG and are checked in. To regenerate:
 
 ```bash
-node scripts/extract-kanjivg.js
+node scripts/extract-kanjivg.js            # both kana scripts
+node scripts/extract-kanjivg.js hiragana   # only hiragana
+node scripts/extract-kanjivg.js katakana   # only katakana
 ```
 
-This fetches KanjiVG SVGs over the network and writes `js/data/hiragana.json`.
+The English deck is hand-authored (KanjiVG has no Latin letters):
+
+```bash
+node scripts/build-alphabet.js
+```
 
 ---
 
 ## Features
 
-- **46 standard hiragana** (no dakuten/handakuten or small kana).
+- **Three decks**: **ひらがな**, **カタカナ**, and **えいご** (uppercase A–Z), with
+  46 kana per kana deck (no dakuten/handakuten or small kana) and 26 letters.
+- **Hamburger menu** in the header to switch between decks.
 - **Stroke-by-stroke writing** with a shadow and numbered stroke order for guidance,
   and gentle "もう いちど" (try again) feedback on misses.
-- **On completion**, the child chooses:
-  - **つぎへ** (next character) — shown only after a clean run (no mistakes).
-  - **もういちど** (repeat) — always available.
-  - **もどる** (back to the character list).
+- **Controls under each character**:
+  - **?** — replay the stroke order (demo strokes drawn in a distinct colour).
+  - **やりなおす** — restart the current character.
+  - **つぎへ** — advance, enabled once all strokes are registered.
+  - A compact top-left **←** button returns to the character list.
 - **Focused practice**: tap any character on the dashboard to practise just that one;
   or start from the beginning and continue through the set.
 - **Simple progress** (no scheduling): each character is marked practised (✓) or
   **かんぺき / perfect** (★) when written with no mistakes.
 - **All controls labelled in Japanese** for young learners.
 - **Voice reading**: each character's name is read aloud when it appears and when
-  the **さいせい** stroke-order demo is played (Web Speech API). Can be turned off
-  in settings.
+  the **?** stroke-order demo is played (Web Speech API).
 - **Offline**: zero external runtime requests; everything is local.
 - **Mobile-first**: responsive drawing canvas sized with `min(vw, vh)` so it always
   fits on screen; large ≥44 px touch targets; safe-area insets for notched devices;
@@ -77,7 +85,7 @@ This fetches KanjiVG SVGs over the network and writes `js/data/hiragana.json`.
 complexity lives in Canvas/SVG rendering and stroke math, where a component
 framework adds nothing. Vanilla keeps the codebase small, eliminates all
 dependencies, and makes the app trivially offline-capable. A tiny view class
-pattern (`Dashboard`, `StudyView`, `SettingsView`) with an explicit `destroy()` for
+pattern (`Dashboard`, `StudyView`) with an explicit `destroy()` for
 event-listener cleanup provides enough structure without abstraction overhead.
 
 ### 2. Stroke data — bundled JSON extracted from KanjiVG
@@ -102,9 +110,9 @@ fragility, and slows first paint. The whole hiragana bundle is ~60 KB.
 **Decision: dropped the SRS.** The target audience is small children learning to
 write hiragana, for whom scheduling pressure, due dates, and 4-way recall ratings
 are inappropriate. Instead the app offers immediate, low-stakes repetition: the
-child finishes a character and chooses **つぎへ** (next), **もういちど** (repeat), or
-**もどる** (back). "Next" only appears after a clean run, gently encouraging a
-retry otherwise.
+child finishes a character and chooses **つぎへ** (next), **やりなおす** (restart), or
+**?** (replay the stroke order). "Next" is enabled once every stroke is registered;
+a clean run still earns a ★.
 
 Progress is a tiny per-character record (`{ practiced, clean, attempts }`) in
 `js/lib/progress.js`, persisted to `localStorage` behind an async wrapper
@@ -152,9 +160,9 @@ freehand drawing. Both share KanjiVG's `0 0 109 109` coordinate space, so alignm
 is exact. Pointer Events unify mouse, touch, and stylus.
 
 ### 6. Progress tracking
-Dashboard shows three simple counts — れんしゅうした (practised), かんぺき (perfect),
-のこり (remaining) — and a grid of the 46 standard hiragana. A ✓ marks a practised
-character and a ★ marks one written with no mistakes.
+Each deck's dashboard shows a grid of its characters. A ✓ marks a practised
+character and a ★ marks one written with no mistakes. Progress is stored per deck
+(separate localStorage keys), so resetting one deck leaves the others untouched.
 
 ---
 
@@ -169,13 +177,15 @@ character and a ★ marks one written with no mistakes.
   pedagogically standard. `js/data/overrides.json` exists as a hook for a
   per-character override map; the current hiragana set matches expected counts
   (あ = 3 strokes), so no overrides are active yet.
-- **Deck contents.** Only the 46 standard hiragana are shown (no dakuten /
-  handakuten, no small kana). The bundled data file still contains all 83 kana, so
-  the other sets can be added later by extending `standardCharacters()`.
+- **Deck contents.** Each deck shows the standard gojūon set (46 kana) or A–Z.
+  The bundled kana data files still contain all 83 kana (dakuten/handakuten and
+  small kana), so those can be surfaced later via `js/lib/sections.js`.
+- **English stroke data.** The A–Z paths are hand-authored simple shapes, not
+  school-verified stroke data.
 - **Accessibility.** Canvas drawing is inherently not screen-reader accessible. All
   non-canvas controls have ARIA labels, there is an `aria-live` status region for
-  feedback, and full keyboard control of the practice actions. Zoom is enabled (no
-  `user-scalable=no`), and safe-area insets are respected. A non-visual fallback
+  feedback, and full keyboard control of the practice actions. Zoom is intentionally
+  disabled for young users, and safe-area insets are respected. A non-visual fallback
   (e.g. typed-answer mode) is out of scope for Phase 1.
 - **Mobile.** Verified on 375–844 px viewports (portrait and landscape) and tablet:
   no horizontal overflow, the drawing area always fits in view, and stroke capture
@@ -191,8 +201,8 @@ character and a ★ marks one written with no mistakes.
 ## Attribution & Licensing
 
 - **Stroke data:** [KanjiVG](http://kanjivg.tagaini.net) by Ulrich Apel, licensed
-  **CC BY-SA 3.0**. The derived `js/data/hiragana.json` is likewise distributed
-  under CC BY-SA 3.0. Attribution appears in the app footer and settings.
+  **CC BY-SA 3.0**. The derived `js/data/hiragana.json` and `js/data/katakana.json`
+  are likewise distributed under CC BY-SA 3.0. Attribution appears in the app footer.
 - **Application code:** original, no third-party runtime dependencies.
 
 If you redistribute this project or data derived from it, you must retain the
@@ -208,23 +218,27 @@ css/style.css               All styles
 js/app.js                   Routing + view lifecycle
 js/components/
   dashboard.js              Character grid + practice progress
-  study-view.js             Drawing, validation, result buttons
-  settings-view.js          Preferences + attribution
+  study-view.js             Drawing, validation, practice controls
 js/lib/
-  progress.js               Standard character set + per-char progress
+  sections.js               Deck definitions (chars, data file, voice lang)
+  progress.js               Standard character sets + per-char progress
   stroke-matcher.js         Sampling, resampling, matching, threshold
+  speech.js                 Web Speech API wrapper (character names)
   storage.js                Async localStorage wrapper
 js/data/
   hiragana.json             Extracted KanjiVG stroke data (CC BY-SA 3.0)
+  katakana.json             Extracted KanjiVG stroke data (CC BY-SA 3.0)
+  alphabet.json             Hand-authored A–Z stroke data
   overrides.json            Pedagogical stroke-count override hook
-scripts/extract-kanjivg.js  One-time data extraction
+scripts/extract-kanjivg.js  Kana extraction from KanjiVG
+scripts/build-alphabet.js   A–Z data generator
 ```
 
-## Extending to Katakana & Kanji
+## Extending the decks
 
-1. Add the target codepoint range to `scripts/extract-kanjivg.js` and regenerate
-   into a new data file (or extend `hiragana.json`).
-2. Feed the new dataset to `StudyView` / `Dashboard` — they consume a generic
-   `{char, codepoint, viewBox, paths, numbers}` array. Update the character list in
-   `js/lib/progress.js` (`standardCharacters()`).
+1. Add the target codepoint range to `scripts/extract-kanjivg.js` (or hand-author
+   a JSON file like `scripts/build-alphabet.js`).
+2. Add or edit a deck in `js/lib/sections.js` — it pairs a character list with a
+   data file and a speech language. `StudyView` / `Dashboard` consume the generic
+   `{char, codepoint, viewBox, paths, numbers}` array.
 3. Swap `Storage` to IndexedDB if the character count grows large.

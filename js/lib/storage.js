@@ -23,13 +23,18 @@ export const Storage = {
     localStorage.removeItem(PREFIX + key);
   },
 
-  /** Progress is a plain object: { "あ": { practiced, clean, attempts }, ... } */
-  async getProgress() {
-    return await this.get('progress', {});
+  /** Progress is stored per section: { "あ": { practiced, clean, attempts } } */
+  progressKey(sectionId) {
+    // Keep the original key for hiragana so existing progress survives.
+    return !sectionId || sectionId === 'hiragana' ? 'progress' : `progress_${sectionId}`;
   },
 
-  async saveProgress(progress) {
-    await this.set('progress', progress);
+  async getProgress(sectionId) {
+    return await this.get(this.progressKey(sectionId), {});
+  },
+
+  async saveProgress(sectionId, progress) {
+    await this.set(this.progressKey(sectionId), progress);
   },
 
   async getSettings() {

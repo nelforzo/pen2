@@ -80,6 +80,84 @@ html, body {
   border-color: var(--primary-light);
 }
 
+/* Hamburger menu */
+.menu {
+  position: relative;
+}
+
+.menu-toggle {
+  display: inline-flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 5px;
+  width: 44px;
+  height: 44px;
+  padding: 0 11px;
+  background: none;
+  border: 1px solid transparent;
+  border-radius: var(--radius);
+  cursor: pointer;
+}
+
+.menu-toggle span {
+  display: block;
+  height: 2px;
+  width: 100%;
+  background: var(--text);
+  border-radius: 2px;
+}
+
+.menu-toggle:hover,
+.menu-toggle[aria-expanded="true"] {
+  background: var(--primary-light);
+}
+
+.menu-list {
+  position: absolute;
+  top: calc(100% + 0.4rem);
+  right: 0;
+  min-width: 170px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  z-index: 50;
+}
+
+.menu-list[hidden] {
+  display: none;
+}
+
+.menu-item {
+  appearance: none;
+  -webkit-appearance: none;
+  border: none;
+  background: none;
+  font: inherit;
+  color: var(--text);
+  text-align: left;
+  padding: 0.8rem 1rem;
+  cursor: pointer;
+}
+
+.menu-item + .menu-item {
+  border-top: 1px solid var(--border);
+}
+
+.menu-item:hover,
+.menu-item:focus-visible,
+.menu-item.active {
+  background: var(--primary-light);
+  color: var(--primary);
+}
+
+.menu-item.active {
+  font-weight: 600;
+}
+
 #main-content {
   flex: 1;
   padding: 1.5rem;

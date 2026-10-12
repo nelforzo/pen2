@@ -18,11 +18,17 @@
   <div id="app">
     <header class="app-header">
       <h1>pen2</h1>
-      <nav>
-        <button id="nav-dashboard" class="nav-btn" aria-label="もじの いちらん">もじ</button>
-        <button id="nav-practice" class="nav-btn" aria-label="れんしゅう">れんしゅう</button>
-        <button id="nav-settings" class="nav-btn" aria-label="せってい">せってい</button>
-      </nav>
+      <div class="menu">
+        <button id="menu-toggle" class="menu-toggle" aria-label="メニュー"
+                aria-expanded="false" aria-haspopup="true">
+          <span></span><span></span><span></span>
+        </button>
+        <nav id="menu-list" class="menu-list" hidden aria-label="スクリプト">
+          <button class="menu-item" data-section="hiragana">ひらがな</button>
+          <button class="menu-item" data-section="katakana">カタカナ</button>
+          <button class="menu-item" data-section="english">えいご</button>
+        </nav>
+      </div>
     </header>
 
     <main id="main-content">

@@ -10,6 +10,11 @@
 export const STANDARD_HIRAGANA =
   'あいうえおかきくけこさしすせそたちつてとなにぬねのはひふへほまみむめもやゆよらりるれろわをん';
 
+export const STANDARD_KATAKANA =
+  'アイウエオカキクケコサシスセソタチツテトナニヌネノハヒフヘホマミムメモヤユヨラリルレロワヲン';
+
+export const STANDARD_ENGLISH = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+
 export function standardCharacters() {
   return STANDARD_HIRAGANA.split('');
 }

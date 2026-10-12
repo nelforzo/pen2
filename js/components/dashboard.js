@@ -1,16 +1,17 @@
 import { Storage } from '../lib/storage.js';
-import { standardCharacters, isPracticed, isClean } from '../lib/progress.js';
+import { isPracticed, isClean } from '../lib/progress.js';
 
 export class Dashboard {
-  constructor(container, data, onPractice) {
+  constructor(container, section, data, onPractice) {
     this.container = container;
+    this.section = section;
     this.data = data;
     this.onPractice = onPractice; // (char) => void
   }
 
   async init() {
-    this.progress = await Storage.getProgress();
-    this.chars = standardCharacters().filter((c) =>
+    this.progress = await Storage.getProgress(this.section.id);
+    this.chars = this.section.chars.filter((c) =>
       this.data.some((d) => d.char === c)
     );
     this.render();
@@ -18,33 +19,14 @@ export class Dashboard {
 
   render() {
     const total = this.chars.length;
-    const practiced = this.chars.filter((c) => isPracticed(this.progress[c])).length;
-    const clean = this.chars.filter((c) => isClean(this.progress[c])).length;
 
     this.container.innerHTML = `
       <div class="dashboard">
-        <h2>ひらがな</h2>
-
-        <div class="stats-grid">
-          <div class="stat-card">
-            <div class="stat-value">${practiced}</div>
-            <div class="stat-label">れんしゅうした</div>
-          </div>
-          <div class="stat-card">
-            <div class="stat-value">${clean}</div>
-            <div class="stat-label">かんぺき</div>
-          </div>
-          <div class="stat-card">
-            <div class="stat-value">${total - practiced}</div>
-            <div class="stat-label">のこり</div>
-          </div>
-        </div>
-
         <div class="deck-actions">
           <button class="btn btn-primary btn-large" id="btn-study">はじめから れんしゅう</button>
         </div>
 
-        <h3 class="deck-heading">ぜんぶの ひらがな（${total}）</h3>
+        <h3 class="deck-heading">ぜんぶの ${this.section.label}（${total}）</h3>
         <p class="deck-hint">タップして その もじを れんしゅう</p>
         <div class="card-list">
           ${this.chars.map((c) => this.renderCardItem(c)).join('')}
@@ -68,8 +50,8 @@ export class Dashboard {
     });
 
     this.container.querySelector('#btn-reset').addEventListener('click', async () => {
-      if (confirm('れんしゅうの きろくを ぜんぶ けしますか？')) {
-        await Storage.remove('progress');
+      if (confirm(`${this.section.label}の れんしゅうの きろくを けしますか？`)) {
+        await Storage.remove(Storage.progressKey(this.section.id));
         location.reload();
       }
     });

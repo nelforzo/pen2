@@ -1,22 +1,22 @@
 import { Dashboard } from './components/dashboard.js';
 import { StudyView } from './components/study-view.js';
-import { SettingsView } from './components/settings-view.js';
+import { SECTIONS, DEFAULT_SECTION, getSection } from './lib/sections.js';
 import { unlockSpeech } from './lib/speech.js';
 
 const main = document.getElementById('main-content');
-let hiraganaData = null;
+const menuToggle = document.getElementById('menu-toggle');
+const menuList = document.getElementById('menu-list');
+
 let currentView = null;
+const dataCache = {};
 
-async function loadData() {
-  const res = await fetch('js/data/hiragana.json');
-  if (!res.ok) throw new Error('Failed to load stroke data');
-  return res.json();
-}
-
-function setActiveNav(id) {
-  document.querySelectorAll('.nav-btn').forEach((btn) => {
-    btn.classList.toggle('active', btn.id === id);
-  });
+async function loadSectionData(section) {
+  if (dataCache[section.id]) return dataCache[section.id];
+  const res = await fetch(section.dataFile);
+  if (!res.ok) throw new Error(`Failed to load ${section.dataFile}`);
+  const data = await res.json();
+  dataCache[section.id] = data;
+  return data;
 }
 
 function cleanupView() {
@@ -26,44 +26,59 @@ function cleanupView() {
   currentView = null;
 }
 
-async function showDashboard() {
+function closeMenu() {
+  menuList.hidden = true;
+  menuToggle.setAttribute('aria-expanded', 'false');
+}
+
+function toggleMenu() {
+  const willOpen = menuList.hidden;
+  menuList.hidden = !willOpen;
+  menuToggle.setAttribute('aria-expanded', String(willOpen));
+}
+
+function setActiveMenu(sectionId) {
+  menuList.querySelectorAll('.menu-item').forEach((el) => {
+    el.classList.toggle('active', el.dataset.section === sectionId);
+  });
+}
+
+async function showDashboard(sectionId) {
   cleanupView();
-  setActiveNav('nav-dashboard');
-  currentView = new Dashboard(main, hiraganaData, (char) => {
-    location.hash = char ? `practice/${encodeURIComponent(char)}` : 'practice';
+  const section = getSection(sectionId);
+  setActiveMenu(section.id);
+  const data = await loadSectionData(section);
+  currentView = new Dashboard(main, section, data, (char) => {
+    location.hash = char
+      ? `${section.id}/practice/${encodeURIComponent(char)}`
+      : `${section.id}/practice`;
   });
   await currentView.init();
 }
 
-async function showPractice(startChar) {
+async function showPractice(sectionId, startChar) {
   cleanupView();
-  setActiveNav('nav-practice');
-  currentView = new StudyView(main, hiraganaData, {
+  const section = getSection(sectionId);
+  setActiveMenu(section.id);
+  const data = await loadSectionData(section);
+  currentView = new StudyView(main, section, data, {
     startChar: startChar || null,
-    onExit: () => { location.hash = 'dashboard'; },
+    onExit: () => { location.hash = section.id; },
   });
-  await currentView.init();
-}
-
-async function showSettings() {
-  cleanupView();
-  setActiveNav('nav-settings');
-  currentView = new SettingsView(main);
   await currentView.init();
 }
 
 function route() {
-  const hash = location.hash.replace(/^#/, '') || 'dashboard';
-  if (hash.startsWith('practice')) {
-    const rest = hash.slice('practice'.length);
-    const char = rest.startsWith('/') ? decodeURIComponent(rest.slice(1)) : null;
-    showPractice(char);
+  const hash = location.hash.replace(/^#/, '') || DEFAULT_SECTION;
+  const parts = hash.split('/');
+  const sectionId = SECTIONS[parts[0]] ? parts[0] : DEFAULT_SECTION;
+
+  if (parts[1] === 'practice') {
+    const char = parts[2] ? decodeURIComponent(parts[2]) : null;
+    showPractice(sectionId, char);
     return;
   }
-  switch (hash) {
-    case 'settings': showSettings(); break;
-    default: showDashboard(); break;
-  }
+  showDashboard(sectionId);
 }
 
 async function main_init() {
@@ -82,16 +97,20 @@ async function main_init() {
     { passive: false }
   );
 
-  try {
-    hiraganaData = await loadData();
-  } catch (e) {
-    main.innerHTML = `<div class="empty-state"><h3>Error</h3><p>${e.message}</p></div>`;
-    return;
-  }
-
-  document.getElementById('nav-dashboard').addEventListener('click', () => { location.hash = 'dashboard'; });
-  document.getElementById('nav-practice').addEventListener('click', () => { location.hash = 'practice'; });
-  document.getElementById('nav-settings').addEventListener('click', () => { location.hash = 'settings'; });
+  // Hamburger menu.
+  menuToggle.addEventListener('click', (e) => {
+    e.stopPropagation();
+    toggleMenu();
+  });
+  menuList.querySelectorAll('.menu-item').forEach((el) => {
+    el.addEventListener('click', () => {
+      closeMenu();
+      location.hash = el.dataset.section;
+    });
+  });
+  document.addEventListener('click', (e) => {
+    if (!e.target.closest('.menu')) closeMenu();
+  });
 
   window.addEventListener('hashchange', route);
   route();

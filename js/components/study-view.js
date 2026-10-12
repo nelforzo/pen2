@@ -1,6 +1,6 @@
 import { Storage } from '../lib/storage.js';
 import { matchStroke, getThresholdForMode, samplePath } from '../lib/stroke-matcher.js';
-import { standardCharacters, recordPractice } from '../lib/progress.js';
+import { recordPractice } from '../lib/progress.js';
 import { speak } from '../lib/speech.js';
 
 const VIEWBOX = 109;
@@ -8,14 +8,34 @@ const VIEWBOX = 109;
 // Recognition thresholds are fairly forgiving — this is for young learners.
 const TRACE_THRESHOLD = getThresholdForMode('trace');
 
+// Romaji readings for the standard hiragana. Katakana readings are derived by
+// shifting each hiragana codepoint by 0x60 (あ→ア, を→ヲ, ん→ン, …).
+const HIRAGANA_ROMAJI = {
+  'あ':'a','い':'i','う':'u','え':'e','お':'o',
+  'か':'ka','き':'ki','く':'ku','け':'ke','こ':'ko',
+  'さ':'sa','し':'shi','す':'su','せ':'se','そ':'so',
+  'た':'ta','ち':'chi','つ':'tsu','て':'te','と':'to',
+  'な':'na','に':'ni','ぬ':'nu','ね':'ne','の':'no',
+  'は':'ha','ひ':'hi','ふ':'fu','へ':'he','ほ':'ho',
+  'ま':'ma','み':'mi','む':'mu','め':'me','も':'mo',
+  'や':'ya','ゆ':'yu','よ':'yo',
+  'ら':'ra','り':'ri','る':'ru','れ':'re','ろ':'ro',
+  'わ':'wa','を':'wo','ん':'n',
+};
+const ROMAJI = { ...HIRAGANA_ROMAJI };
+for (const [kana, reading] of Object.entries(HIRAGANA_ROMAJI)) {
+  ROMAJI[String.fromCodePoint(kana.codePointAt(0) + 0x60)] = reading;
+}
+
 export class StudyView {
-  constructor(container, data, options = {}) {
+  constructor(container, section, data, options = {}) {
     this.container = container;
-    this.data = data; // hiragana.json
+    this.section = section;
+    this.data = data; // stroke data for this section
     this.onExit = options.onExit || (() => {});
 
     // The practice sequence: all standard characters (optionally starting at one).
-    this.sequence = standardCharacters().filter((c) =>
+    this.sequence = section.chars.filter((c) =>
       this.data.some((d) => d.char === c)
     );
     this.startChar = options.startChar || null;
@@ -34,7 +54,7 @@ export class StudyView {
 
   async init() {
     this.settings = await Storage.getSettings();
-    this.progress = await Storage.getProgress();
+    this.progress = await Storage.getProgress(this.section.id);
 
     const startIndex = this.startChar
       ? Math.max(0, this.sequence.indexOf(this.startChar))
@@ -219,7 +239,7 @@ export class StudyView {
   speakCharacter() {
     if (this.settings.speak === false) return;
     const char = this.sequence[this.index];
-    if (char) speak(char);
+    if (char) speak(char, { lang: this.section.speechLang });
   }
 
   updateUI() {
@@ -227,7 +247,7 @@ export class StudyView {
     const romaji = this.getRomaji(char);
     this.promptReading.innerHTML = `
       <div style="font-size:2.5rem;margin-bottom:0.25rem">${char}</div>
-      ${this.settings.showRomaji && romaji ? `<div style="font-size:1rem;color:var(--text-muted)">${romaji}</div>` : ''}
+      ${this.settings.showRomaji && this.section.showRomaji !== false && romaji ? `<div style="font-size:1rem;color:var(--text-muted)">${romaji}</div>` : ''}
     `;
     this.progressEl.textContent = `${this.index + 1} / ${this.sequence.length}`;
     this.strokeInfo.textContent = `Stroke ${this.strokeIndex + 1} of ${this.charData?.paths.length || 0}`;
@@ -235,19 +255,7 @@ export class StudyView {
   }
 
   getRomaji(char) {
-    const map = {
-      'あ':'a','い':'i','う':'u','え':'e','お':'o',
-      'か':'ka','き':'ki','く':'ku','け':'ke','こ':'ko',
-      'さ':'sa','し':'shi','す':'su','せ':'se','そ':'so',
-      'た':'ta','ち':'chi','つ':'tsu','て':'te','と':'to',
-      'な':'na','に':'ni','ぬ':'nu','ね':'ne','の':'no',
-      'は':'ha','ひ':'hi','ふ':'fu','へ':'he','ほ':'ho',
-      'ま':'ma','み':'mi','む':'mu','め':'me','も':'mo',
-      'や':'ya','ゆ':'yu','よ':'yo',
-      'ら':'ra','り':'ri','る':'ru','れ':'re','ろ':'ro',
-      'わ':'wa','を':'wo','ん':'n',
-    };
-    return map[char] || '';
+    return ROMAJI[char] || '';
   }
 
   renderShadow() {
@@ -398,7 +406,7 @@ export class StudyView {
     const updated = recordPractice(this.progress[char], this.cleanRun);
     updated.id = char;
     this.progress[char] = updated;
-    Storage.saveProgress(this.progress);
+    Storage.saveProgress(this.section.id, this.progress);
 
     // All strokes are registered, so the child may advance regardless of
     // whether the first attempt was clean. cleanRun still earns a ★.
