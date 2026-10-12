@@ -48,8 +48,11 @@ export class Dashboard {
     const total = this.chars.length;
     const isNumbers = this.section.id === 'numbers';
     const hint = isNumbers
-      ? '0〜9は かいて れんしゅう。10〜100は タップして きいてみよう。'
+      ? 'タップして れんしゅう。2けたは ひだりから かいてね。'
       : 'タップして その もじを れんしゅう';
+    const cards = this.section.groups
+      ? this.section.groups.map((g) => this.renderGroup(g)).join('')
+      : `<div class="card-list">${this.chars.map((c) => this.renderCardItem(c)).join('')}</div>`;
     const caseToggle = this.section.id === 'english' ? `
       <div class="case-toggle" role="group" aria-label="もじの だいしょう">
         <button class="case-btn ${this.caseMode === 'upper' ? 'active' : ''}" data-case="upper" aria-pressed="${this.caseMode === 'upper'}">大文字 ABC</button>
@@ -66,9 +69,7 @@ export class Dashboard {
         <h3 class="deck-heading">ぜんぶの ${this.section.label}（${total}）</h3>
         ${caseToggle}
         <p class="deck-hint">${hint}</p>
-        <div class="card-list">
-          ${this.chars.map((c) => this.renderCardItem(c)).join('')}
-        </div>
+        ${cards}
 
         <div class="deck-actions" style="margin-top:1.5rem">
           <button class="btn btn-danger" id="btn-reset" aria-label="さいしょから">↻</button>
@@ -88,7 +89,7 @@ export class Dashboard {
       el.addEventListener('click', () => {
         const char = el.dataset.char;
         if (!this.dataChars.has(char)) {
-          // Numbers 10–100 have no stroke data: read them aloud instead.
+          // A card without stroke data can't be traced: read it aloud instead.
           const text = this.section.speechText
             ? this.section.speechText(char)
             : char;
@@ -96,6 +97,12 @@ export class Dashboard {
           return;
         }
         if (this.onPractice) this.onPractice(char);
+      });
+    });
+
+    this.container.querySelectorAll('.group-play').forEach((el) => {
+      el.addEventListener('click', () => {
+        if (this.onPractice) this.onPractice(el.dataset.start);
       });
     });
 
@@ -118,15 +125,36 @@ export class Dashboard {
     });
   }
 
+  renderGroup(group) {
+    return `
+      <section class="deck-group">
+        <div class="deck-group-head">
+          <h4 class="deck-group-heading">${group.label}</h4>
+          <button class="btn btn-accent btn-small group-play" data-start="${group.chars[0]}"
+                  aria-label="${group.label}を れんしゅう">▶</button>
+        </div>
+        <div class="card-list">
+          ${group.chars.map((c) => this.renderCardItem(c)).join('')}
+        </div>
+      </section>
+    `;
+  }
+
   renderCardItem(char) {
     const hasStrokes = this.dataChars.has(char);
     const entry = this.progress[char];
     const done = hasStrokes && isPracticed(entry);
     const clean = hasStrokes && isClean(entry);
-    let cls = hasStrokes ? '' : 'no-strokes';
+    let stateCls = '';
     let mark = '';
-    if (clean) { cls = 'done-clean'; mark = '★'; }
-    else if (done) { cls = 'done'; mark = '✓'; }
+    if (clean) { stateCls = 'done-clean'; mark = '★'; }
+    else if (done) { stateCls = 'done'; mark = '✓'; }
+    const cls = [
+      hasStrokes ? '' : 'no-strokes',
+      char.length === 2 ? 'digits-2' : '',
+      char.length >= 3 ? 'digits-3' : '',
+      stateCls,
+    ].filter(Boolean).join(' ');
     const aria = hasStrokes ? char : `${char}（よみかた）`;
     return `
       <button class="card-item ${cls}" data-char="${char}" aria-label="${aria}">
