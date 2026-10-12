@@ -27,6 +27,8 @@ export class StudyView {
     this.attemptedThisStroke = false; // did the child already miss the current stroke?
     this.cleanRun = true;
     this.settings = { showRomaji: true };
+    this.isAnimating = false;
+    this._animationToken = 0;
   }
 
   async init() {
@@ -45,6 +47,7 @@ export class StudyView {
   render() {
     this.container.innerHTML = `
       <div class="study-view">
+        <button class="btn btn-secondary study-back" id="btn-back" aria-label="もどる">←</button>
         <div class="study-prompt">
           <div class="reading" id="prompt-reading" aria-live="polite"></div>
         </div>
@@ -65,15 +68,10 @@ export class StudyView {
           <span id="stroke-info"></span>
         </div>
 
-        <div class="study-controls" id="study-controls">
-          <button class="btn btn-secondary" id="btn-clear" aria-label="けす">けす</button>
-          <button class="btn btn-secondary" id="btn-back" aria-label="もどる">もどる</button>
-        </div>
-
-        <div class="result-buttons" id="result-buttons" style="display:none" role="group" aria-label="つぎの どうさ">
-          <button class="btn btn-primary btn-large" id="btn-next">つぎへ</button>
-          <button class="btn btn-secondary btn-large" id="btn-repeat">もういちど</button>
-          <button class="btn btn-secondary" id="btn-back2">もどる</button>
+        <div class="study-controls" id="study-controls" role="group" aria-label="そうさ">
+          <button class="btn btn-secondary" id="btn-replay">さいせい</button>
+          <button class="btn btn-secondary" id="btn-redo">やりなおす</button>
+          <button class="btn btn-primary" id="btn-next" disabled>つぎへ</button>
         </div>
       </div>
     `;
@@ -89,7 +87,7 @@ export class StudyView {
     this.progressEl = this.container.querySelector('#study-progress');
     this.strokeInfo = this.container.querySelector('#stroke-info');
     this.studyControls = this.container.querySelector('#study-controls');
-    this.resultButtons = this.container.querySelector('#result-buttons');
+    this.nextBtn = this.container.querySelector('#btn-next');
 
     this.setupHiDPI();
     this.drawGrid();
@@ -155,18 +153,19 @@ export class StudyView {
       if (this.isDrawing) { this._activePointerId = null; this.endStroke(); }
     });
 
-    this.container.querySelector('#btn-clear').addEventListener('click', () => this.resetStrokes());
     this.container.querySelector('#btn-back').addEventListener('click', () => this.onExit());
-    this.container.querySelector('#btn-back2').addEventListener('click', () => this.onExit());
-    this.container.querySelector('#btn-next').addEventListener('click', () => this.next());
-    this.container.querySelector('#btn-repeat').addEventListener('click', () => this.repeat());
+    this.container.querySelector('#btn-replay').addEventListener('click', () => this.playStrokeOrder());
+    this.container.querySelector('#btn-redo').addEventListener('click', () => this.repeat());
+    this.nextBtn.addEventListener('click', () => this.next());
 
     this._keyHandler = (e) => {
       if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
       const key = e.key.toLowerCase();
       if (this.isComplete) {
-        if (key === 'n' || key === 'arrowright') { e.preventDefault(); this.next(); }
-        else if (key === 'r') { e.preventDefault(); this.repeat(); }
+        if (!this.nextBtn.disabled && (key === 'n' || key === 'arrowright')) {
+          e.preventDefault();
+          this.next();
+        } else if (key === 'r') { e.preventDefault(); this.repeat(); }
         return;
       }
       if (key === 'c') { e.preventDefault(); this.resetStrokes(); }
@@ -194,6 +193,8 @@ export class StudyView {
     const char = this.sequence[index];
     this.charData = this.data.find((d) => d.char === char);
 
+    this._animationToken++;
+    this.isAnimating = false;
     this.strokeIndex = 0;
     this.acceptedStrokes = [];
     this.currentStroke = [];
@@ -220,8 +221,7 @@ export class StudyView {
     `;
     this.progressEl.textContent = `${this.index + 1} / ${this.sequence.length}`;
     this.strokeInfo.textContent = `Stroke ${this.strokeIndex + 1} of ${this.charData?.paths.length || 0}`;
-    this.resultButtons.style.display = 'none';
-    this.studyControls.style.display = 'flex';
+    this.nextBtn.disabled = true;
   }
 
   getRomaji(char) {
@@ -284,6 +284,9 @@ export class StudyView {
 
   startStroke(pt) {
     if (!this.charData || this.strokeIndex >= this.charData.paths.length) return;
+    // Stop a running stroke-order demo so the child can draw freely.
+    this._animationToken++;
+    this.isAnimating = false;
     this.isDrawing = true;
     this.currentStroke = [pt];
   }
@@ -387,11 +390,72 @@ export class StudyView {
     this.progress[char] = updated;
     Storage.saveProgress(this.progress);
 
-    // Show result buttons. "Next" only after a clean run.
-    this.studyControls.style.display = 'none';
-    this.resultButtons.style.display = 'flex';
-    const nextBtn = this.container.querySelector('#btn-next');
-    nextBtn.style.display = this.cleanRun ? 'inline-flex' : 'none';
+    // "Next" only becomes active after a clean run.
+    this.nextBtn.disabled = !this.cleanRun;
+  }
+
+  playStrokeOrder() {
+    if (!this.charData || !this.charData.paths.length) return;
+
+    const token = ++this._animationToken;
+    this.isAnimating = true;
+
+    const svgPaths = Array.from(this.shadowGroup.querySelectorAll('.shadow-path'));
+    const strokeDuration = 600;
+
+    const drawStroke = (index) => {
+      if (token !== this._animationToken) return;
+      if (index >= svgPaths.length) {
+        this.isAnimating = false;
+        return;
+      }
+      const pathEl = svgPaths[index];
+      const total = pathEl.getTotalLength();
+      const start = performance.now();
+
+      const step = (now) => {
+        if (token !== this._animationToken) return;
+        const t = Math.min(1, (now - start) / strokeDuration);
+        this.renderAnimationFrame(svgPaths, index, total * t);
+        if (t < 1) {
+          requestAnimationFrame(step);
+        } else {
+          setTimeout(() => drawStroke(index + 1), 150);
+        }
+      };
+      requestAnimationFrame(step);
+    };
+
+    drawStroke(0);
+  }
+
+  renderAnimationFrame(svgPaths, currentIndex, currentLength) {
+    this.redrawAcceptedStrokes();
+    this.drawCtx.lineCap = 'round';
+    this.drawCtx.lineJoin = 'round';
+    this.drawCtx.strokeStyle = '#059669'; // demo strokes differ from the child's strokes
+    this.drawCtx.lineWidth = 4;
+
+    for (let i = 0; i < currentIndex; i++) {
+      this.drawPathLength(svgPaths[i], svgPaths[i].getTotalLength());
+    }
+    if (currentIndex < svgPaths.length) {
+      this.drawPathLength(svgPaths[currentIndex], currentLength);
+    }
+  }
+
+  drawPathLength(pathEl, length) {
+    if (length <= 0) return;
+    const ctx = this.drawCtx;
+    const steps = Math.max(2, Math.ceil(length / 2));
+    ctx.beginPath();
+    for (let i = 0; i <= steps; i++) {
+      const l = Math.min(length, (length * i) / steps);
+      const p = pathEl.getPointAtLength(l);
+      if (i === 0) ctx.moveTo(p.x, p.y);
+      else ctx.lineTo(p.x, p.y);
+    }
+    ctx.stroke();
   }
 
   next() {
