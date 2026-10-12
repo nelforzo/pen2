@@ -47,6 +47,9 @@ This fetches KanjiVG SVGs over the network and writes `js/data/hiragana.json`.
 - **Simple progress** (no scheduling): each character is marked practised (✓) or
   **かんぺき / perfect** (★) when written with no mistakes.
 - **All controls labelled in Japanese** for young learners.
+- **Voice reading**: each character's name is read aloud when it appears and when
+  the **さいせい** stroke-order demo is played (Web Speech API). Can be turned off
+  in settings.
 - **Offline**: zero external runtime requests; everything is local.
 - **Mobile-first**: responsive drawing canvas sized with `min(vw, vh)` so it always
   fits on screen; large ≥44 px touch targets; safe-area insets for notched devices;

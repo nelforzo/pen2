@@ -35,6 +35,7 @@ export const Storage = {
   async getSettings() {
     return await this.get('settings', {
       showRomaji: true,
+      speak: true,
     });
   },
 

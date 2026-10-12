@@ -1,6 +1,7 @@
 import { Dashboard } from './components/dashboard.js';
 import { StudyView } from './components/study-view.js';
 import { SettingsView } from './components/settings-view.js';
+import { unlockSpeech } from './lib/speech.js';
 
 const main = document.getElementById('main-content');
 let hiraganaData = null;
@@ -66,6 +67,9 @@ function route() {
 }
 
 async function main_init() {
+  // Allow Web Speech on iOS: the first speak() must happen inside a gesture.
+  document.addEventListener('pointerdown', unlockSpeech, { once: true });
+
   // iOS Safari ignores user-scalable=no, so block pinch-zoom gestures directly.
   ['gesturestart', 'gesturechange', 'gestureend'].forEach((evt) => {
     document.addEventListener(evt, (e) => e.preventDefault(), { passive: false });

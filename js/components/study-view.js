@@ -1,6 +1,7 @@
 import { Storage } from '../lib/storage.js';
 import { matchStroke, getThresholdForMode, samplePath } from '../lib/stroke-matcher.js';
 import { standardCharacters, recordPractice } from '../lib/progress.js';
+import { speak } from '../lib/speech.js';
 
 const VIEWBOX = 109;
 
@@ -210,6 +211,15 @@ export class StudyView {
     this.updateUI();
     this.renderShadow();
     this.clearDrawCanvas();
+
+    // Read the character name aloud when it appears.
+    this.speakCharacter();
+  }
+
+  speakCharacter() {
+    if (this.settings.speak === false) return;
+    const char = this.sequence[this.index];
+    if (char) speak(char);
   }
 
   updateUI() {
@@ -397,6 +407,9 @@ export class StudyView {
 
   playStrokeOrder() {
     if (!this.charData || !this.charData.paths.length) return;
+
+    // Say the character again while the order is demonstrated.
+    this.speakCharacter();
 
     const token = ++this._animationToken;
     this.isAnimating = true;

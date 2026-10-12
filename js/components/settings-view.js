@@ -1,4 +1,5 @@
 import { Storage } from '../lib/storage.js';
+import { stopSpeaking } from '../lib/speech.js';
 
 export class SettingsView {
   constructor(container) {
@@ -23,6 +24,13 @@ export class SettingsView {
         </div>
         <div class="setting-row">
           <div>
+            <label for="speak">こえで よむ</label>
+            <div class="description">Read the character name aloud when it appears and when replaying the stroke order.</div>
+          </div>
+          <input type="checkbox" id="speak" ${this.settings.speak !== false ? 'checked' : ''}>
+        </div>
+        <div class="setting-row">
+          <div>
             <label>つくりかた</label>
             <div class="description">Stroke data from <a href="http://kanjivg.tagaini.net" target="_blank" rel="noopener">KanjiVG</a>, licensed CC BY-SA 3.0.</div>
           </div>
@@ -33,6 +41,12 @@ export class SettingsView {
     this.container.querySelector('#show-romaji').addEventListener('change', async (e) => {
       this.settings.showRomaji = e.target.checked;
       await Storage.saveSettings(this.settings);
+    });
+
+    this.container.querySelector('#speak').addEventListener('change', async (e) => {
+      this.settings.speak = e.target.checked;
+      await Storage.saveSettings(this.settings);
+      if (!e.target.checked) stopSpeaking();
     });
   }
 }
