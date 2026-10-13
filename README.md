@@ -76,10 +76,9 @@ node scripts/build-numbers.js
   **かんぺき / perfect** (★) when written with no mistakes.
 - **Star counter**: the header shows a running total of every ★ earned across all
   decks, so children can watch their collection grow.
-- **Fresh start every day**: the saved ✓/★ marks (and the star counter) are
-  cleared automatically on the first load of each local day, so children can
-  collect stars again. A red **↻** button on each deck also resets immediately on
-  demand.
+- **Keeps progress until reset**: the saved ✓/★ marks (and the star counter)
+  stay put day to day. A red **↻** button on each deck clears that deck's marks
+  and its stars whenever the child is ready to start over.
 - **All controls labelled in Japanese** for young learners.
 - **Voice reading**: each character's name is read aloud when it appears and when
   the **?** stroke-order demo is played (Web Speech API).
@@ -142,9 +141,9 @@ a clean run still earns a ★.
 Progress is a tiny per-character record (`{ practiced, clean, attempts }`) in
 `js/lib/progress.js`, persisted to `localStorage` behind an async wrapper
 (`js/lib/storage.js`). A character shown with ✓ was practised; ★ means it was
-written with no mistakes. `Storage.resetProgressDaily()` clears every deck's
-progress on the first launch of each local day (stamped by
-`Storage.today()`), independent of the manual **↻** reset.
+written with no mistakes. There is no automatic reset: progress persists until a
+grown-up or child presses the manual **↻** button on a deck, which clears that
+deck's marks and removes its stars from the counter.
 
 ### 4. Stroke recognition — normalized point-cloud matcher (not full `$1`)
 **Suggested:** hand-rolled Euclidean, or `$1`/`$P`/DTW.

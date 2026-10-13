@@ -12,8 +12,8 @@ const starCounter = document.getElementById('star-counter');
 let currentView = null;
 const dataCache = {};
 
-// Total ★ across every deck (only "clean" entries). Cleared by the same daily
-// reset as the per-deck marks.
+// Total ★ across every deck (only "clean" entries). Reset manually per deck,
+// never automatically.
 async function updateStarCounter() {
   let total = 0;
   for (const section of Object.values(SECTIONS)) {
@@ -130,10 +130,6 @@ async function main_init() {
     if (!e.target.closest('.menu')) closeMenu();
   });
 
-  // Start each local day with a fresh deck so children can collect new stars.
-  await Storage.resetProgressDaily(
-    Object.values(SECTIONS).map((s) => Storage.progressKey(s.id))
-  );
   await updateStarCounter();
   document.addEventListener('pen2:progresschanged', updateStarCounter);
 
