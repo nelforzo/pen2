@@ -1,4 +1,4 @@
-// ペンツー service worker — cache-first for the app shell so the app works offline.
+// pen2 service worker — cache-first for the app shell so the app works offline.
 const CACHE_NAME = 'pen2-app-v19';
 const APP_SHELL = [
   './',
