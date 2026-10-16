@@ -56,6 +56,9 @@ service-worker cache).
 
 - **Four decks**: **ひらがな**, **カタカナ**, **えいご** (A–Z), and **すうじ**
   (numbers), with 46 kana per kana deck (no dakuten/handakuten or small kana).
+- **Gojūon row grouping**: the ひらがな and カタカナ decks are split into
+  **あ行**, **か行**, **さ行**, **た行**, **な行**, **は行**, **ま行**, **や行**,
+  **ら行**, **わ行**, each with its own **▶** button to practise a single row.
 - **English case toggle**: the えいご deck has **大文字**/**小文字** buttons that
   switch between uppercase A–Z and lowercase a–z; the choice is remembered.
 - **Numbers 1–100**: the すうじ deck is grouped into sections (**1–10**,

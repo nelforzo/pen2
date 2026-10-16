@@ -23,7 +23,8 @@ the source repo alone does *not* update the live site.
 Work in `~/Developer/pen2` as usual, then:
 
 1. **Bump the service-worker cache** if *any* cached asset changed.
-   In `sw.js`, increment `CACHE_NAME` (currently `pen2-app-v7` → `pen2-app-v8`).
+   In `sw.js`, increment the `CACHE_NAME` version (e.g. `pen2-app-v8` →
+   `pen2-app-v9`).
    This is cache-first, so without a bump installed clients keep the old files
    forever — this matters most for `js/data/*.json`.
 

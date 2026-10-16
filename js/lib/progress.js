@@ -7,11 +7,28 @@
  *   - attempts:   total number of tries (for grown-ups / curiosity)
  */
 
-export const STANDARD_HIRAGANA =
-  'あいうえおかきくけこさしすせそたちつてとなにぬねのはひふへほまみむめもやゆよらりるれろわをん';
+/**
+ * The gojūon rows (あ行, か行, …), the canonical order for both kana decks.
+ * Each row is 5 kana except や行 (3) and わ行 (3, including ん). Deriving the
+ * flat character sets from these rows keeps practice order and the dashboard
+ * grouping in sync.
+ */
+export const KANA_ROWS = [
+  { hiragana: 'あいうえお', katakana: 'アイウエオ' },
+  { hiragana: 'かきくけこ', katakana: 'カキクケコ' },
+  { hiragana: 'さしすせそ', katakana: 'サシスセソ' },
+  { hiragana: 'たちつてと', katakana: 'タチツテト' },
+  { hiragana: 'なにぬねの', katakana: 'ナニヌネノ' },
+  { hiragana: 'はひふへほ', katakana: 'ハヒフヘホ' },
+  { hiragana: 'まみむめも', katakana: 'マミムメモ' },
+  { hiragana: 'やゆよ', katakana: 'ヤユヨ' },
+  { hiragana: 'らりるれろ', katakana: 'ラリルレロ' },
+  { hiragana: 'わをん', katakana: 'ワヲン' },
+];
 
-export const STANDARD_KATAKANA =
-  'アイウエオカキクケコサシスセソタチツテトナニヌネノハヒフヘホマミムメモヤユヨラリルレロワヲン';
+export const STANDARD_HIRAGANA = KANA_ROWS.map((row) => row.hiragana).join('');
+
+export const STANDARD_KATAKANA = KANA_ROWS.map((row) => row.katakana).join('');
 
 export const STANDARD_ENGLISH = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
 export const STANDARD_ENGLISH_LOWER = 'abcdefghijklmnopqrstuvwxyz';

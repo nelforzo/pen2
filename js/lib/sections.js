@@ -1,4 +1,5 @@
 import {
+  KANA_ROWS,
   STANDARD_HIRAGANA,
   STANDARD_KATAKANA,
   STANDARD_ENGLISH,
@@ -34,6 +35,17 @@ for (let start = 1; start <= 91; start += 10) {
 }
 
 /**
+ * Group a kana deck by gojūon row (あ行, か行, …) for the dashboard, using the
+ * deck's own script for the row label (あ行 for hiragana, ア行 for katakana).
+ */
+function kanaGroups(script) {
+  return KANA_ROWS.map((row) => ({
+    label: `${row[script][0]}行`,
+    chars: row[script].split(''),
+  }));
+}
+
+/**
  * The four practice sections shown in the main menu. Each one is a full
  * deck: a character set plus the stroke data file that backs it.
  */
@@ -43,6 +55,7 @@ export const SECTIONS = {
     label: 'ひらがな',
     dataFile: 'js/data/hiragana.json',
     chars: STANDARD_HIRAGANA.split(''),
+    groups: kanaGroups('hiragana'),
     speechLang: 'ja-JP',
     showRomaji: true,
   },
@@ -51,6 +64,7 @@ export const SECTIONS = {
     label: 'カタカナ',
     dataFile: 'js/data/katakana.json',
     chars: STANDARD_KATAKANA.split(''),
+    groups: kanaGroups('katakana'),
     speechLang: 'ja-JP',
     showRomaji: true,
   },
