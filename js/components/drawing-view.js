@@ -238,7 +238,7 @@ export class DrawingView {
     const stamp = new Date().toISOString().slice(0, 10);
     const a = document.createElement('a');
     a.href = url;
-    a.download = `pen2-oekaki-${stamp}.png`;
+    a.download = `ペンツー-oekaki-${stamp}.png`;
     document.body.appendChild(a);
     a.click();
     a.remove();
