@@ -8,7 +8,7 @@ export class MenuView {
   constructor(container, options = {}) {
     this.container = container;
     this.onSelect = options.onSelect || (() => {});
-    this.sections = options.sections || Object.values(SECTIONS);
+    this.sections = (options.sections || Object.values(SECTIONS)).filter((s) => !s.hidden);
   }
 
   init() {

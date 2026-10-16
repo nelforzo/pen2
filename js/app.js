@@ -117,6 +117,12 @@ function route() {
   const sectionId = SECTIONS[parts[0]] ? parts[0] : DEFAULT_SECTION;
   const section = getSection(sectionId);
 
+  // Hidden sections (e.g. おえかき) fall back to the main menu.
+  if (section.hidden) {
+    showMenu();
+    return;
+  }
+
   if (section.kind === 'draw') {
     showDraw(sectionId);
     return;
@@ -164,6 +170,11 @@ async function main_init() {
       closeMenu();
       location.hash = el.dataset.section;
     });
+  });
+  // Hide any sections flagged hidden (see SECTIONS in sections.js).
+  menuList.querySelectorAll('.menu-item').forEach((el) => {
+    const section = SECTIONS[el.dataset.section];
+    if (section && section.hidden) el.hidden = true;
   });
   document.addEventListener('click', (e) => {
     if (!e.target.closest('.menu')) closeMenu();

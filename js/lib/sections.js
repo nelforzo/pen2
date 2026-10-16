@@ -101,6 +101,8 @@ export const SECTIONS = {
     label: 'おえかき',
     menuLabel: 'おえかき',
     kind: 'draw',
+    // Hidden for now so children focus on practice. Remove this to re-enable.
+    hidden: true,
   },
 };
 
