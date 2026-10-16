@@ -67,7 +67,11 @@ service-worker cache).
   stroke by stroke, left to right. Zero has no card of its own — it is practised
   inside 10, 20, … 100.
 - **Hamburger menu** in the header to switch between decks (ひらがな, カタカナ,
-  ABC, 123).
+  ABC, 123) and the おえかき free-draw canvas.
+- **おえかき (free drawing)**: a separate canvas section with 8 colours, a pencil
+  (fine), a brush (wide) and an eraser, plus clear (with confirmation), save and
+  export. Drawings can be saved to the device's local storage and reopened for
+  further editing, or downloaded as a PNG.
 - **Stroke-by-stroke writing** with a shadow and numbered stroke order for guidance,
   and gentle "もう いちど" (try again) feedback on misses.
 - **Dashboard actions**: a green **▶** button starts practice from the beginning;
@@ -274,6 +278,7 @@ js/app.js                   Routing + view lifecycle
 js/components/
   dashboard.js              Character grid + practice progress
   study-view.js             Drawing, validation, practice controls
+  drawing-view.js           Free-draw canvas (おえかき): tools, save/load, export
 js/lib/
   sections.js               Deck definitions (chars, data file, voice lang)
   progress.js               Standard character sets + per-char progress

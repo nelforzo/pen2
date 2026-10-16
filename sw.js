@@ -1,5 +1,5 @@
 // pen2 service worker — cache-first for the app shell so the app works offline.
-const CACHE_NAME = 'pen2-app-v9';
+const CACHE_NAME = 'pen2-app-v10';
 const APP_SHELL = [
   './',
   './index.html',
@@ -8,6 +8,7 @@ const APP_SHELL = [
   './js/app.js',
   './js/components/dashboard.js',
   './js/components/study-view.js',
+  './js/components/drawing-view.js',
   './js/lib/storage.js',
   './js/lib/progress.js',
   './js/lib/sections.js',

@@ -90,6 +90,13 @@ export const SECTIONS = {
     speechText: (char) => numberToJapanese(parseInt(char, 10)),
     showRomaji: false,
   },
+  // Not a stroke deck: this section renders a free-drawing canvas instead of a
+  // character grid (see DrawingView). It has no stroke data file.
+  draw: {
+    id: 'draw',
+    label: 'おえかき',
+    kind: 'draw',
+  },
 };
 
 export const DEFAULT_SECTION = 'hiragana';

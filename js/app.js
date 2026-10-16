@@ -1,5 +1,6 @@
 import { Dashboard } from './components/dashboard.js';
 import { StudyView } from './components/study-view.js';
+import { DrawingView } from './components/drawing-view.js';
 import { SECTIONS, DEFAULT_SECTION, getSection } from './lib/sections.js';
 import { unlockSpeech } from './lib/speech.js';
 import { Storage } from './lib/storage.js';
@@ -86,10 +87,24 @@ async function showPractice(sectionId, startChar) {
   await currentView.init();
 }
 
+async function showDraw(sectionId) {
+  cleanupView();
+  const section = getSection(sectionId);
+  setActiveMenu(section.id);
+  currentView = new DrawingView(main, section);
+  await currentView.init();
+}
+
 function route() {
   const hash = location.hash.replace(/^#/, '') || DEFAULT_SECTION;
   const parts = hash.split('/');
   const sectionId = SECTIONS[parts[0]] ? parts[0] : DEFAULT_SECTION;
+  const section = getSection(sectionId);
+
+  if (section.kind === 'draw') {
+    showDraw(sectionId);
+    return;
+  }
 
   if (parts[1] === 'practice') {
     const char = parts[2] ? decodeURIComponent(parts[2]) : null;
