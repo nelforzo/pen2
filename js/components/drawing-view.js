@@ -1,9 +1,10 @@
 import { Storage } from '../lib/storage.js';
 
-// The drawing is kept on a fixed high-resolution square canvas and only the
-// CSS size changes with the screen. That keeps strokes sharp, makes export
+// The drawing is kept on a fixed high-resolution portrait canvas (2:3) and only
+// the CSS size changes with the screen. That keeps strokes sharp, makes export
 // predictable, and means a resize/orientation change never distorts a drawing.
-const CANVAS_SIZE = 1000;
+const CANVAS_W = 1000;
+const CANVAS_H = 1500;
 
 const DRAWINGS_KEY = 'drawings';
 const MAX_DRAWINGS = 12;
@@ -20,7 +21,7 @@ const COLORS = [
   { hex: '#ec407a', name: 'ピンク' },
 ];
 
-// `width` is in logical canvas units (see CANVAS_SIZE).
+// `width` is in logical canvas units (see CANVAS_W/CANVAS_H).
 const TOOLS = {
   pencil: { label: 'えんぴつ', icon: '✏️', width: 8, eraser: false },
   brush: { label: 'ふで', icon: '🖌️', width: 30, eraser: false },
@@ -82,7 +83,7 @@ export class DrawingView {
         </div>
 
         <div class="draw-stage" id="draw-stage">
-          <canvas id="draw-canvas" width="${CANVAS_SIZE}" height="${CANVAS_SIZE}"
+          <canvas id="draw-canvas" width="${CANVAS_W}" height="${CANVAS_H}"
                   aria-label="おえかき キャンバス"></canvas>
           <div class="draw-toast" id="draw-toast" role="status" aria-live="polite"></div>
         </div>
@@ -109,18 +110,6 @@ export class DrawingView {
 
   setupCanvas() {
     this.fillWhite();
-    // Keep the CSS size a square that fits the available stage area.
-    this.resizeObserver = new ResizeObserver(() => this.resizeCanvas());
-    this.resizeObserver.observe(this.stage);
-    this.resizeCanvas();
-  }
-
-  resizeCanvas() {
-    const w = this.stage.clientWidth;
-    const h = this.stage.clientHeight;
-    const side = Math.max(120, Math.floor(Math.min(w, h)));
-    this.canvas.style.width = `${side}px`;
-    this.canvas.style.height = `${side}px`;
   }
 
   bindEvents() {
@@ -181,8 +170,8 @@ export class DrawingView {
 
   point(e) {
     const rect = this.canvas.getBoundingClientRect();
-    const scaleX = CANVAS_SIZE / rect.width;
-    const scaleY = CANVAS_SIZE / rect.height;
+    const scaleX = CANVAS_W / rect.width;
+    const scaleY = CANVAS_H / rect.height;
     return {
       x: (e.clientX - rect.left) * scaleX,
       y: (e.clientY - rect.top) * scaleY,
@@ -238,7 +227,7 @@ export class DrawingView {
 
   fillWhite() {
     this.ctx.fillStyle = '#ffffff';
-    this.ctx.fillRect(0, 0, CANVAS_SIZE, CANVAS_SIZE);
+    this.ctx.fillRect(0, 0, CANVAS_W, CANVAS_H);
   }
 
   async save() {
@@ -331,7 +320,14 @@ export class DrawingView {
     const img = new Image();
     img.onload = () => {
       this.fillWhite();
-      this.ctx.drawImage(img, 0, 0, CANVAS_SIZE, CANVAS_SIZE);
+      // Fit the saved image without distortion (older saves were square, so
+      // they are centred with white bands instead of being stretched to 2:3).
+      const iw = img.naturalWidth || img.width || CANVAS_W;
+      const ih = img.naturalHeight || img.height || CANVAS_H;
+      const scale = Math.min(CANVAS_W / iw, CANVAS_H / ih);
+      const w = iw * scale;
+      const h = ih * scale;
+      this.ctx.drawImage(img, (CANVAS_W - w) / 2, (CANVAS_H - h) / 2, w, h);
       this.currentId = id;
       this.closeModal();
       this.toast('ひらいたよ');
@@ -360,7 +356,6 @@ export class DrawingView {
   }
 
   destroy() {
-    if (this.resizeObserver) this.resizeObserver.disconnect();
     clearTimeout(this._toastTimer);
   }
 }
