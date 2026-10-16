@@ -77,13 +77,13 @@ export class DrawingView {
         </div>
 
         <div class="draw-stage" id="draw-stage">
-          <canvas id="draw-canvas" aria-label="おえかきキャンバス"></canvas>
+          <canvas id="draw-pad" aria-label="おえかきキャンバス"></canvas>
           <div class="draw-toast" id="draw-toast" role="status" aria-live="polite"></div>
         </div>
       </div>
     `;
 
-    this.canvas = this.container.querySelector('#draw-canvas');
+    this.canvas = this.container.querySelector('#draw-pad');
     this.ctx = this.canvas.getContext('2d');
     this.stage = this.container.querySelector('#draw-stage');
     this.toastEl = this.container.querySelector('#draw-toast');
