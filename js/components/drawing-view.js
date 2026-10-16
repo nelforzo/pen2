@@ -1,11 +1,5 @@
 import { Storage } from '../lib/storage.js';
 
-// The drawing is kept on a fixed high-resolution portrait canvas (2:3) and only
-// the CSS size changes with the screen. That keeps strokes sharp, makes export
-// predictable, and means a resize/orientation change never distorts a drawing.
-const CANVAS_W = 1000;
-const CANVAS_H = 1500;
-
 const DRAWINGS_KEY = 'drawings';
 const MAX_DRAWINGS = 12;
 
@@ -21,11 +15,12 @@ const COLORS = [
   { hex: '#ec407a', name: 'ピンク' },
 ];
 
-// `width` is in logical canvas units (see CANVAS_W/CANVAS_H).
+// Stroke widths are fractions of the canvas width, so they scale with the
+// (dynamic) canvas size and stay consistent when the drawing is replayed.
 const TOOLS = {
-  pencil: { label: 'えんぴつ', icon: '✏️', width: 8, eraser: false },
-  brush: { label: 'ふで', icon: '🖌️', width: 30, eraser: false },
-  eraser: { label: 'けしゴム', icon: '🧽', width: 48, eraser: true },
+  pencil: { label: 'えんぴつ', icon: '✏️', width: 0.008, eraser: false },
+  brush: { label: 'ふで', icon: '🖌️', width: 0.03, eraser: false },
+  eraser: { label: 'けしゴム', icon: '🧽', width: 0.05, eraser: true },
 };
 
 export class DrawingView {
@@ -38,8 +33,18 @@ export class DrawingView {
     this.color = COLORS[0].hex;
     this.currentId = null; // id of the loaded drawing, if any
 
+    // The canvas fills the available area, so its shape can change (resize /
+    // rotation). Strokes are kept as normalized vectors and replayed whenever
+    // the canvas is resized, which keeps the artwork intact and undistorted.
+    this.strokes = [];
+    this.currentStroke = null;
+    this.loadedImage = null;
+
+    this.cssW = 0;
+    this.cssH = 0;
+    this.dpr = 1;
+
     this.isDrawing = false;
-    this.lastPoint = null;
     this._activePointerId = null;
     this.drawings = [];
     this._toastTimer = null;
@@ -83,8 +88,7 @@ export class DrawingView {
         </div>
 
         <div class="draw-stage" id="draw-stage">
-          <canvas id="draw-canvas" width="${CANVAS_W}" height="${CANVAS_H}"
-                  aria-label="おえかき キャンバス"></canvas>
+          <canvas id="draw-canvas" aria-label="おえかき キャンバス"></canvas>
           <div class="draw-toast" id="draw-toast" role="status" aria-live="polite"></div>
         </div>
       </div>
@@ -109,7 +113,67 @@ export class DrawingView {
   }
 
   setupCanvas() {
-    this.fillWhite();
+    // The CSS makes the canvas fill the stage; here we only sync the backing
+    // store (resolution) and replay the artwork whenever the size changes.
+    this.resizeObserver = new ResizeObserver(() => this.resizeCanvas());
+    this.resizeObserver.observe(this.stage);
+    this.resizeCanvas();
+  }
+
+  resizeCanvas() {
+    const w = Math.round(this.stage.clientWidth);
+    const h = Math.round(this.stage.clientHeight);
+    if (w < 20 || h < 20) return;
+    this.cssW = w;
+    this.cssH = h;
+    this.dpr = Math.min(window.devicePixelRatio || 1, 3);
+    this.canvas.width = Math.round(w * this.dpr);
+    this.canvas.height = Math.round(h * this.dpr);
+    this.redraw();
+  }
+
+  redraw() {
+    const ctx = this.ctx;
+    ctx.setTransform(this.dpr, 0, 0, this.dpr, 0, 0);
+    ctx.fillStyle = '#ffffff';
+    ctx.fillRect(0, 0, this.cssW, this.cssH);
+
+    if (this.loadedImage) {
+      const iw = this.loadedImage.naturalWidth || this.loadedImage.width || this.cssW;
+      const ih = this.loadedImage.naturalHeight || this.loadedImage.height || this.cssH;
+      const scale = Math.min(this.cssW / iw, this.cssH / ih);
+      const dw = iw * scale;
+      const dh = ih * scale;
+      ctx.drawImage(this.loadedImage, (this.cssW - dw) / 2, (this.cssH - dh) / 2, dw, dh);
+    }
+
+    for (const stroke of this.strokes) this.drawStroke(stroke);
+  }
+
+  drawStroke(stroke) {
+    const pts = stroke.points;
+    if (!pts.length) return;
+    if (pts.length === 1) {
+      this.drawSegment(pts[0], pts[0], stroke);
+      return;
+    }
+    for (let i = 1; i < pts.length; i++) {
+      this.drawSegment(pts[i - 1], pts[i], stroke);
+    }
+  }
+
+  drawSegment(from, to, stroke) {
+    const ctx = this.ctx;
+    ctx.lineCap = 'round';
+    ctx.lineJoin = 'round';
+    ctx.lineWidth = Math.max(1, stroke.width * this.cssW);
+    // The paper is white, so an eraser is simply white paint. This keeps saved
+    // PNGs opaque and looking the same everywhere they are viewed.
+    ctx.strokeStyle = stroke.tool === 'eraser' ? '#ffffff' : stroke.color;
+    ctx.beginPath();
+    ctx.moveTo(from.x * this.cssW, from.y * this.cssH);
+    ctx.lineTo(to.x * this.cssW, to.y * this.cssH);
+    ctx.stroke();
   }
 
   bindEvents() {
@@ -168,13 +232,13 @@ export class DrawingView {
     });
   }
 
+  // Returns a normalized point in [0,1] relative to the canvas.
   point(e) {
     const rect = this.canvas.getBoundingClientRect();
-    const scaleX = CANVAS_W / rect.width;
-    const scaleY = CANVAS_H / rect.height;
+    if (!rect.width || !rect.height) return { x: 0, y: 0 };
     return {
-      x: (e.clientX - rect.left) * scaleX,
-      y: (e.clientY - rect.top) * scaleY,
+      x: (e.clientX - rect.left) / rect.width,
+      y: (e.clientY - rect.top) / rect.height,
     };
   }
 
@@ -186,9 +250,16 @@ export class DrawingView {
     try { this.canvas.setPointerCapture(e.pointerId); } catch { /* ignore */ }
     this.isDrawing = true;
     const p = this.point(e);
-    this.lastPoint = p;
+    const stroke = {
+      tool: this.tool,
+      color: this.color,
+      width: TOOLS[this.tool].width,
+      points: [p],
+    };
+    this.strokes.push(stroke);
+    this.currentStroke = stroke;
     // A single tap should leave a dot.
-    this.strokeSegment(p, p);
+    this.drawSegment(p, p, stroke);
   }
 
   onPointerMove(e) {
@@ -198,36 +269,18 @@ export class DrawingView {
     const events = typeof e.getCoalescedEvents === 'function' ? e.getCoalescedEvents() : [e];
     for (const ev of events) {
       const p = this.point(ev);
-      this.strokeSegment(this.lastPoint, p);
-      this.lastPoint = p;
+      const pts = this.currentStroke.points;
+      const prev = pts[pts.length - 1];
+      pts.push(p);
+      this.drawSegment(prev, p, this.currentStroke);
     }
   }
 
   onPointerEnd(e) {
     if (e.pointerId !== this._activePointerId) return;
     this.isDrawing = false;
-    this.lastPoint = null;
+    this.currentStroke = null;
     this._activePointerId = null;
-  }
-
-  strokeSegment(from, to) {
-    const tool = TOOLS[this.tool];
-    const ctx = this.ctx;
-    ctx.lineCap = 'round';
-    ctx.lineJoin = 'round';
-    ctx.lineWidth = tool.width;
-    // The paper is white, so an eraser is simply white paint. This keeps saved
-    // PNGs opaque and looking the same everywhere they are viewed.
-    ctx.strokeStyle = tool.eraser ? '#ffffff' : this.color;
-    ctx.beginPath();
-    ctx.moveTo(from.x, from.y);
-    ctx.lineTo(to.x, to.y);
-    ctx.stroke();
-  }
-
-  fillWhite() {
-    this.ctx.fillStyle = '#ffffff';
-    this.ctx.fillRect(0, 0, CANVAS_W, CANVAS_H);
   }
 
   async save() {
@@ -282,10 +335,12 @@ export class DrawingView {
 
   clear() {
     if (!window.confirm('ぜんぶ けしても いい？')) return;
-    this.fillWhite();
+    this.strokes = [];
+    this.loadedImage = null;
     // Clearing starts a fresh picture, so a later Save creates a new entry
     // instead of overwriting the drawing that was last opened.
     this.currentId = null;
+    this.redraw();
     this.toast('あたらしい キャンバス');
   }
 
@@ -319,16 +374,10 @@ export class DrawingView {
     if (!entry) return;
     const img = new Image();
     img.onload = () => {
-      this.fillWhite();
-      // Fit the saved image without distortion (older saves were square, so
-      // they are centred with white bands instead of being stretched to 2:3).
-      const iw = img.naturalWidth || img.width || CANVAS_W;
-      const ih = img.naturalHeight || img.height || CANVAS_H;
-      const scale = Math.min(CANVAS_W / iw, CANVAS_H / ih);
-      const w = iw * scale;
-      const h = ih * scale;
-      this.ctx.drawImage(img, (CANVAS_W - w) / 2, (CANVAS_H - h) / 2, w, h);
+      this.loadedImage = img;
+      this.strokes = [];
       this.currentId = id;
+      this.redraw();
       this.closeModal();
       this.toast('ひらいたよ');
     };
@@ -356,6 +405,7 @@ export class DrawingView {
   }
 
   destroy() {
+    if (this.resizeObserver) this.resizeObserver.disconnect();
     clearTimeout(this._toastTimer);
   }
 }

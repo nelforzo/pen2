@@ -782,6 +782,8 @@ html, body {
   display: flex;
   flex-direction: column;
   gap: 0.5rem;
+  height: 100%;
+  min-height: 0;
 }
 
 .draw-toolbar {
@@ -790,6 +792,7 @@ html, body {
   align-items: center;
   gap: 0.4rem;
   padding: 0.4rem;
+  flex: 0 0 auto;
   background: var(--surface);
   border: 1px solid var(--border);
   border-radius: var(--radius);
@@ -882,9 +885,9 @@ html, body {
 
 .draw-stage {
   position: relative;
-  width: min(100%, 420px);
-  margin: 0 auto;
-  aspect-ratio: 2 / 3;
+  flex: 1 1 auto;
+  width: 100%;
+  min-height: 200px;
   background: var(--bg);
   border-radius: var(--radius);
   overflow: hidden;
@@ -1057,12 +1060,6 @@ html, body {
   }
   .tool-btn {
     font-size: 1.15rem;
-  }
-}
-
-@media (max-height: 560px) and (orientation: landscape) {
-  .draw-stage {
-    width: min(100%, 50vh);
   }
 }
 
