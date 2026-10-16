@@ -1,8 +1,3 @@
-import { Storage } from '../lib/storage.js';
-
-const DRAWINGS_KEY = 'drawings';
-const MAX_DRAWINGS = 12;
-
 // Eight cheerful colours for young learners.
 const COLORS = [
   { hex: '#1a1a1a', name: '黒' },
@@ -24,21 +19,18 @@ const TOOLS = {
 };
 
 export class DrawingView {
-  constructor(container, section, options = {}) {
+  constructor(container, section) {
     this.container = container;
     this.section = section;
-    this.onExit = options.onExit || (() => {});
 
     this.tool = 'pencil';
     this.color = COLORS[0].hex;
-    this.currentId = null; // id of the loaded drawing, if any
 
     // The canvas fills the available area, so its shape can change (resize /
     // rotation). Strokes are kept as normalized vectors and replayed whenever
     // the canvas is resized, which keeps the artwork intact and undistorted.
     this.strokes = [];
     this.currentStroke = null;
-    this.loadedImage = null;
 
     this.cssW = 0;
     this.cssH = 0;
@@ -46,13 +38,12 @@ export class DrawingView {
 
     this.isDrawing = false;
     this._activePointerId = null;
-    this.drawings = [];
     this._toastTimer = null;
   }
 
-  async init() {
-    const saved = await Storage.get(DRAWINGS_KEY, []);
-    this.drawings = Array.isArray(saved) ? saved : [];
+  init() {
+    // Let the draw view stretch to fill the space below the header.
+    this.container.classList.add('main-content--draw');
     this.render();
     this.setupCanvas();
     this.bindEvents();
@@ -63,8 +54,6 @@ export class DrawingView {
       <div class="draw-view">
         <div class="draw-toolbar" role="toolbar" aria-label="おえかきの道具">
           <div class="tool-group" role="group" aria-label="ファイル">
-            <button class="tool-btn" id="draw-load" aria-label="開く" title="開く">📂</button>
-            <button class="tool-btn" id="draw-save" aria-label="保存" title="保存">💾</button>
             <button class="tool-btn" id="draw-export" aria-label="ダウンロード" title="ダウンロード">⬇️</button>
             <button class="tool-btn tool-btn-danger" id="draw-clear" aria-label="全部消す" title="全部消す">🗑️</button>
           </div>
@@ -92,24 +81,12 @@ export class DrawingView {
           <div class="draw-toast" id="draw-toast" role="status" aria-live="polite"></div>
         </div>
       </div>
-
-      <div class="draw-modal" id="draw-modal" hidden>
-        <div class="draw-modal-panel" role="dialog" aria-modal="true" aria-label="保存した絵">
-          <div class="draw-modal-head">
-            <h3>保存した絵</h3>
-            <button class="draw-modal-close" id="draw-modal-close" aria-label="閉じる">✕</button>
-          </div>
-          <ul class="drawing-list" id="drawing-list"></ul>
-        </div>
-      </div>
     `;
 
     this.canvas = this.container.querySelector('#draw-canvas');
     this.ctx = this.canvas.getContext('2d');
     this.stage = this.container.querySelector('#draw-stage');
     this.toastEl = this.container.querySelector('#draw-toast');
-    this.modal = this.container.querySelector('#draw-modal');
-    this.drawingList = this.container.querySelector('#drawing-list');
   }
 
   setupCanvas() {
@@ -137,16 +114,6 @@ export class DrawingView {
     ctx.setTransform(this.dpr, 0, 0, this.dpr, 0, 0);
     ctx.fillStyle = '#ffffff';
     ctx.fillRect(0, 0, this.cssW, this.cssH);
-
-    if (this.loadedImage) {
-      const iw = this.loadedImage.naturalWidth || this.loadedImage.width || this.cssW;
-      const ih = this.loadedImage.naturalHeight || this.loadedImage.height || this.cssH;
-      const scale = Math.min(this.cssW / iw, this.cssH / ih);
-      const dw = iw * scale;
-      const dh = ih * scale;
-      ctx.drawImage(this.loadedImage, (this.cssW - dw) / 2, (this.cssH - dh) / 2, dw, dh);
-    }
-
     for (const stroke of this.strokes) this.drawStroke(stroke);
   }
 
@@ -167,8 +134,8 @@ export class DrawingView {
     ctx.lineCap = 'round';
     ctx.lineJoin = 'round';
     ctx.lineWidth = Math.max(1, stroke.width * this.cssW);
-    // The paper is white, so an eraser is simply white paint. This keeps saved
-    // PNGs opaque and looking the same everywhere they are viewed.
+    // The paper is white, so an eraser is simply white paint. This keeps
+    // exported PNGs opaque and looking the same everywhere they are viewed.
     ctx.strokeStyle = stroke.tool === 'eraser' ? '#ffffff' : stroke.color;
     ctx.beginPath();
     ctx.moveTo(from.x * this.cssW, from.y * this.cssH);
@@ -177,11 +144,8 @@ export class DrawingView {
   }
 
   bindEvents() {
-    this.container.querySelector('#draw-load').addEventListener('click', () => this.openLoad());
-    this.container.querySelector('#draw-save').addEventListener('click', () => this.save());
     this.container.querySelector('#draw-export').addEventListener('click', () => this.exportImage());
     this.container.querySelector('#draw-clear').addEventListener('click', () => this.clear());
-    this.container.querySelector('#draw-modal-close').addEventListener('click', () => this.closeModal());
 
     this.container.querySelectorAll('.tool-btn-tool').forEach((btn) => {
       btn.addEventListener('click', () => this.setTool(btn.dataset.tool));
@@ -197,20 +161,6 @@ export class DrawingView {
     canvas.addEventListener('pointerup', end);
     canvas.addEventListener('pointercancel', end);
     canvas.addEventListener('lostpointercapture', end);
-
-    this.modal.addEventListener('click', (e) => {
-      if (e.target === this.modal) this.closeModal();
-    });
-    this.drawingList.addEventListener('click', (e) => {
-      const delBtn = e.target.closest('.drawing-del');
-      if (delBtn) {
-        e.stopPropagation();
-        this.deleteDrawing(delBtn.dataset.del);
-        return;
-      }
-      const loadBtn = e.target.closest('.drawing-load');
-      if (loadBtn) this.loadDrawing(loadBtn.dataset.id);
-    });
   }
 
   setTool(tool) {
@@ -283,44 +233,6 @@ export class DrawingView {
     this._activePointerId = null;
   }
 
-  async save() {
-    const dataUrl = this.canvas.toDataURL('image/png');
-    const existing = this.drawings.find((d) => d.id === this.currentId);
-    if (existing) {
-      // Saving an opened drawing updates it in place.
-      existing.dataUrl = dataUrl;
-      existing.updatedAt = Date.now();
-    } else {
-      const entry = {
-        id: `${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
-        name: `おえかき ${this.drawings.length + 1}`,
-        dataUrl,
-        updatedAt: Date.now(),
-      };
-      this.drawings.unshift(entry);
-      this.currentId = entry.id;
-    }
-    const ok = await this.persist();
-    this.toast(ok ? '保存したよ' : '保存できなかった');
-  }
-
-  async persist() {
-    // Keep the newest MAX_DRAWINGS, and if storage is full drop the oldest
-    // until it fits rather than losing the save silently.
-    while (this.drawings.length > MAX_DRAWINGS) this.drawings.pop();
-    for (let attempt = 0; attempt < MAX_DRAWINGS; attempt++) {
-      try {
-        await Storage.set(DRAWINGS_KEY, this.drawings);
-        return true;
-      } catch {
-        if (this.drawings.length <= 1) return false;
-        this.drawings.pop();
-        if (this.drawings.every((d) => d.id !== this.currentId)) this.currentId = null;
-      }
-    }
-    return false;
-  }
-
   exportImage() {
     const url = this.canvas.toDataURL('image/png');
     const stamp = new Date().toISOString().slice(0, 10);
@@ -336,62 +248,8 @@ export class DrawingView {
   clear() {
     if (!window.confirm('全部消してもいい？')) return;
     this.strokes = [];
-    this.loadedImage = null;
-    // Clearing starts a fresh picture, so a later Save creates a new entry
-    // instead of overwriting the drawing that was last opened.
-    this.currentId = null;
     this.redraw();
     this.toast('新しいキャンバス');
-  }
-
-  openLoad() {
-    this.renderDrawingList();
-    this.modal.hidden = false;
-  }
-
-  closeModal() {
-    this.modal.hidden = true;
-  }
-
-  renderDrawingList() {
-    if (!this.drawings.length) {
-      this.drawingList.innerHTML = '<li class="draw-empty">まだ保存した絵がないよ</li>';
-      return;
-    }
-    this.drawingList.innerHTML = this.drawings.map((d) => `
-      <li class="drawing-item">
-        <button class="drawing-load" data-id="${d.id}">
-          <img src="${d.dataUrl}" alt="${d.name}">
-          <span>${d.name}</span>
-        </button>
-        <button class="drawing-del" data-del="${d.id}" aria-label="${d.name}を消す">✕</button>
-      </li>
-    `).join('');
-  }
-
-  loadDrawing(id) {
-    const entry = this.drawings.find((d) => d.id === id);
-    if (!entry) return;
-    const img = new Image();
-    img.onload = () => {
-      this.loadedImage = img;
-      this.strokes = [];
-      this.currentId = id;
-      this.redraw();
-      this.closeModal();
-      this.toast('開いたよ');
-    };
-    img.src = entry.dataUrl;
-  }
-
-  async deleteDrawing(id) {
-    const entry = this.drawings.find((d) => d.id === id);
-    if (!entry) return;
-    if (!window.confirm(`「${entry.name}」を消してもいい？`)) return;
-    this.drawings = this.drawings.filter((d) => d.id !== id);
-    if (this.currentId === id) this.currentId = null;
-    await this.persist();
-    this.renderDrawingList();
   }
 
   toast(message) {
@@ -405,6 +263,7 @@ export class DrawingView {
   }
 
   destroy() {
+    this.container.classList.remove('main-content--draw');
     if (this.resizeObserver) this.resizeObserver.disconnect();
     clearTimeout(this._toastTimer);
   }
