@@ -1,6 +1,7 @@
 import { Dashboard } from './components/dashboard.js';
 import { StudyView } from './components/study-view.js';
 import { DrawingView } from './components/drawing-view.js';
+import { MenuView } from './components/menu-view.js';
 import { SECTIONS, DEFAULT_SECTION, getSection } from './lib/sections.js';
 import { unlockSpeech } from './lib/speech.js';
 import { Storage } from './lib/storage.js';
@@ -95,8 +96,23 @@ async function showDraw(sectionId) {
   await currentView.init();
 }
 
+function showMenu() {
+  cleanupView();
+  setActiveMenu(null);
+  currentView = new MenuView(main, {
+    onSelect: (sectionId) => { location.hash = sectionId; },
+  });
+  currentView.init();
+}
+
 function route() {
-  const hash = location.hash.replace(/^#/, '') || DEFAULT_SECTION;
+  const hash = location.hash.replace(/^#/, '');
+  // The root view (and the header title) is the main menu.
+  if (!hash || hash === 'home') {
+    showMenu();
+    return;
+  }
+
   const parts = hash.split('/');
   const sectionId = SECTIONS[parts[0]] ? parts[0] : DEFAULT_SECTION;
   const section = getSection(sectionId);
@@ -135,6 +151,14 @@ async function main_init() {
     e.stopPropagation();
     toggleMenu();
   });
+
+  // The app title returns to the main menu.
+  const homeLink = document.getElementById('home-link');
+  if (homeLink) {
+    homeLink.addEventListener('click', () => {
+      location.hash = 'home';
+    });
+  }
   menuList.querySelectorAll('.menu-item').forEach((el) => {
     el.addEventListener('click', () => {
       closeMenu();

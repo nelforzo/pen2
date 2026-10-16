@@ -54,6 +54,9 @@ service-worker cache).
 
 ## Features
 
+- **Main menu**: the app opens on a root menu that shows the pen2 icon with a
+  vertical list of wide section buttons (same order as the hamburger menu).
+  Tapping the **pen2** title in the header returns to it from anywhere.
 - **Four decks**: **ひらがな**, **カタカナ**, **えいご** (A–Z), and **すうじ**
   (numbers), with 46 kana per kana deck (no dakuten/handakuten or small kana).
 - **Gojūon row grouping**: the ひらがな and カタカナ decks are split into
@@ -279,6 +282,7 @@ js/components/
   dashboard.js              Character grid + practice progress
   study-view.js             Drawing, validation, practice controls
   drawing-view.js           Free-draw canvas (おえかき): tools, save/load, export
+  menu-view.js              Root main menu (icon + section buttons)
 js/lib/
   sections.js               Deck definitions (chars, data file, voice lang)
   progress.js               Standard character sets + per-char progress
