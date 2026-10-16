@@ -42,6 +42,14 @@ KanjiVG has no digits:
 node scripts/build-numbers.js
 ```
 
+### Deployment
+
+The live app is served by GitHub Pages from a **separate repo**
+(`nelforzo.github.io`, in its `pen2/` subdirectory). Pushing this source repo
+does **not** update the site. See [`DEPLOY.md`](./DEPLOY.md) for the full
+checklist (sync the app files into the Pages repo, push both, and bump the
+service-worker cache).
+
 ---
 
 ## Features
