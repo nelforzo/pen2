@@ -1,6 +1,6 @@
 {
-  "name": "pen2",
-  "short_name": "pen2",
+  "name": "ペンツー",
+  "short_name": "ペンツー",
   "description": "Hiragana writing practice for young learners, with stroke-order guidance.",
   "start_url": "./index.html",
   "scope": "./",
