@@ -67,7 +67,9 @@ function parseTransform(t) {
 function parseSVG(svgText, char) {
   // Extract paths
   const paths = [];
-  const pathRegex = /<path\s+id="kvg:[^"]+"\s+d="([^"]+)"/g;
+  // KanjiVG paths may carry extra attributes (e.g. `kvg:type="㇇"`) between
+  // the id and the `d` attribute, so allow any attributes in between.
+  const pathRegex = /<path\s+id="kvg:[^"]+"[^>]*?\sd="([^"]+)"/g;
   let m;
   while ((m = pathRegex.exec(svgText)) !== null) {
     paths.push(m[1]);
