@@ -21,7 +21,7 @@ export class MenuView {
         <img class="menu-hero" src="icons/icon-512.png" alt="pen2" width="180" height="180">
         <nav class="menu-sections" aria-label="セクション">
           ${this.sections.map((s) => `
-            <button class="menu-section-btn" data-section="${s.id}">${s.label}</button>
+            <button class="menu-section-btn" data-section="${s.id}">${s.menuLabel || s.label}</button>
           `).join('')}
         </nav>
       </div>

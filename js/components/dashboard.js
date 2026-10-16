@@ -48,13 +48,13 @@ export class Dashboard {
     const total = this.chars.length;
     const isNumbers = this.section.id === 'numbers';
     const hint = isNumbers
-      ? 'タップして れんしゅう。2けたは ひだりから かいてね。'
-      : 'タップして その もじを れんしゅう';
+      ? 'タップして練習。2桁は左から書いてね。'
+      : 'タップしてその文字を練習';
     const cards = this.section.groups
       ? this.section.groups.map((g) => this.renderGroup(g)).join('')
       : `<div class="card-list">${this.chars.map((c) => this.renderCardItem(c)).join('')}</div>`;
     const caseToggle = this.section.id === 'english' ? `
-      <div class="case-toggle" role="group" aria-label="もじの だいしょう">
+      <div class="case-toggle" role="group" aria-label="文字の大小">
         <button class="case-btn ${this.caseMode === 'upper' ? 'active' : ''}" data-case="upper" aria-pressed="${this.caseMode === 'upper'}">大文字 ABC</button>
         <button class="case-btn ${this.caseMode === 'lower' ? 'active' : ''}" data-case="lower" aria-pressed="${this.caseMode === 'lower'}">小文字 abc</button>
       </div>
@@ -63,16 +63,16 @@ export class Dashboard {
     this.container.innerHTML = `
       <div class="dashboard">
         <div class="deck-actions">
-          <button class="btn btn-accent btn-large" id="btn-study" aria-label="はじめから れんしゅう">▶</button>
+          <button class="btn btn-accent btn-large" id="btn-study" aria-label="最初から練習">▶</button>
         </div>
 
-        <h3 class="deck-heading">ぜんぶの ${this.section.label}（${total}）</h3>
+        <h3 class="deck-heading">全部の ${this.section.label}（${total}）</h3>
         ${caseToggle}
         <p class="deck-hint">${hint}</p>
         ${cards}
 
         <div class="deck-actions" style="margin-top:1.5rem">
-          <button class="btn btn-danger" id="btn-reset" aria-label="さいしょから">↻</button>
+          <button class="btn btn-danger" id="btn-reset" aria-label="最初から">↻</button>
         </div>
       </div>
     `;
@@ -118,7 +118,7 @@ export class Dashboard {
     }
 
     this.container.querySelector('#btn-reset').addEventListener('click', async () => {
-      if (confirm(`${this.section.label}の れんしゅうの きろくを けしますか？`)) {
+      if (confirm(`${this.section.label}の練習の記録を消しますか？`)) {
         await Storage.remove(Storage.progressKey(this.section.id));
         location.reload();
       }
@@ -131,7 +131,7 @@ export class Dashboard {
         <div class="deck-group-head">
           <h4 class="deck-group-heading">${group.label}</h4>
           <button class="btn btn-accent btn-small group-play" data-start="${group.chars[0]}"
-                  aria-label="${group.label}を れんしゅう">▶</button>
+                  aria-label="${group.label}を練習">▶</button>
         </div>
         <div class="card-list">
           ${group.chars.map((c) => this.renderCardItem(c)).join('')}
@@ -155,7 +155,7 @@ export class Dashboard {
       char.length >= 3 ? 'digits-3' : '',
       stateCls,
     ].filter(Boolean).join(' ');
-    const aria = hasStrokes ? char : `${char}（よみかた）`;
+    const aria = hasStrokes ? char : `${char}（読み方）`;
     return `
       <button class="card-item ${cls}" data-char="${char}" aria-label="${aria}">
         <div class="char">${char}</div>

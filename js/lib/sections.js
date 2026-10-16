@@ -53,6 +53,7 @@ export const SECTIONS = {
   hiragana: {
     id: 'hiragana',
     label: 'ひらがな',
+    menuLabel: 'ひらがな',
     dataFile: 'js/data/hiragana.json',
     chars: STANDARD_HIRAGANA.split(''),
     groups: kanaGroups('hiragana'),
@@ -62,6 +63,7 @@ export const SECTIONS = {
   katakana: {
     id: 'katakana',
     label: 'カタカナ',
+    menuLabel: 'カタカナ',
     dataFile: 'js/data/katakana.json',
     chars: STANDARD_KATAKANA.split(''),
     groups: kanaGroups('katakana'),
@@ -70,7 +72,8 @@ export const SECTIONS = {
   },
   english: {
     id: 'english',
-    label: 'えいご',
+    label: '英語',
+    menuLabel: 'ABC',
     dataFile: 'js/data/alphabet.json',
     chars: [...STANDARD_ENGLISH.split(''), ...STANDARD_ENGLISH_LOWER.split('')],
     speechLang: 'en-US',
@@ -80,7 +83,8 @@ export const SECTIONS = {
   },
   numbers: {
     id: 'numbers',
-    label: 'すうじ',
+    label: '数字',
+    menuLabel: '123',
     dataFile: 'js/data/numbers.json',
     // Every number 1–100 has stroke data; multi-digit numbers are composed
     // from their digits (left to right) by scripts/build-numbers.js.
@@ -95,6 +99,7 @@ export const SECTIONS = {
   draw: {
     id: 'draw',
     label: 'おえかき',
+    menuLabel: 'おえかき',
     kind: 'draw',
   },
 };

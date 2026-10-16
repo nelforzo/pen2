@@ -5,22 +5,22 @@ const MAX_DRAWINGS = 12;
 
 // Eight cheerful colours for young learners.
 const COLORS = [
-  { hex: '#1a1a1a', name: 'くろ' },
-  { hex: '#e53935', name: 'あか' },
+  { hex: '#1a1a1a', name: '黒' },
+  { hex: '#e53935', name: '赤' },
   { hex: '#fb8c00', name: 'オレンジ' },
-  { hex: '#fdd835', name: 'きいろ' },
-  { hex: '#43a047', name: 'みどり' },
-  { hex: '#1e88e5', name: 'あお' },
-  { hex: '#8e24aa', name: 'むらさき' },
+  { hex: '#fdd835', name: '黄色' },
+  { hex: '#43a047', name: '緑' },
+  { hex: '#1e88e5', name: '青' },
+  { hex: '#8e24aa', name: '紫' },
   { hex: '#ec407a', name: 'ピンク' },
 ];
 
 // Stroke widths are fractions of the canvas width, so they scale with the
 // (dynamic) canvas size and stay consistent when the drawing is replayed.
 const TOOLS = {
-  pencil: { label: 'えんぴつ', icon: '✏️', width: 0.008, eraser: false },
-  brush: { label: 'ふで', icon: '🖌️', width: 0.03, eraser: false },
-  eraser: { label: 'けしゴム', icon: '🧽', width: 0.05, eraser: true },
+  pencil: { label: '鉛筆', icon: '✏️', width: 0.008, eraser: false },
+  brush: { label: '筆', icon: '🖌️', width: 0.03, eraser: false },
+  eraser: { label: '消しゴム', icon: '🧽', width: 0.05, eraser: true },
 };
 
 export class DrawingView {
@@ -61,15 +61,15 @@ export class DrawingView {
   render() {
     this.container.innerHTML = `
       <div class="draw-view">
-        <div class="draw-toolbar" role="toolbar" aria-label="おえかきの どうぐ">
+        <div class="draw-toolbar" role="toolbar" aria-label="おえかきの道具">
           <div class="tool-group" role="group" aria-label="ファイル">
-            <button class="tool-btn" id="draw-load" aria-label="ひらく" title="ひらく">📂</button>
-            <button class="tool-btn" id="draw-save" aria-label="ほぞん" title="ほぞん">💾</button>
+            <button class="tool-btn" id="draw-load" aria-label="開く" title="開く">📂</button>
+            <button class="tool-btn" id="draw-save" aria-label="保存" title="保存">💾</button>
             <button class="tool-btn" id="draw-export" aria-label="ダウンロード" title="ダウンロード">⬇️</button>
-            <button class="tool-btn tool-btn-danger" id="draw-clear" aria-label="ぜんぶ けす" title="ぜんぶ けす">🗑️</button>
+            <button class="tool-btn tool-btn-danger" id="draw-clear" aria-label="全部消す" title="全部消す">🗑️</button>
           </div>
           <div class="tool-sep" aria-hidden="true"></div>
-          <div class="tool-group" role="group" aria-label="どうぐ">
+          <div class="tool-group" role="group" aria-label="道具">
             ${Object.entries(TOOLS).map(([key, t]) => `
               <button class="tool-btn tool-btn-tool" data-tool="${key}"
                       aria-label="${t.label}" title="${t.label}"
@@ -77,7 +77,7 @@ export class DrawingView {
             `).join('')}
           </div>
           <div class="tool-sep" aria-hidden="true"></div>
-          <div class="tool-group tool-colors" role="group" aria-label="いろ">
+          <div class="tool-group tool-colors" role="group" aria-label="色">
             ${COLORS.map((c) => `
               <button class="swatch ${c.hex === this.color ? 'active' : ''}"
                       data-color="${c.hex}" style="--swatch:${c.hex}"
@@ -88,16 +88,16 @@ export class DrawingView {
         </div>
 
         <div class="draw-stage" id="draw-stage">
-          <canvas id="draw-canvas" aria-label="おえかき キャンバス"></canvas>
+          <canvas id="draw-canvas" aria-label="おえかきキャンバス"></canvas>
           <div class="draw-toast" id="draw-toast" role="status" aria-live="polite"></div>
         </div>
       </div>
 
       <div class="draw-modal" id="draw-modal" hidden>
-        <div class="draw-modal-panel" role="dialog" aria-modal="true" aria-label="ほぞんした え">
+        <div class="draw-modal-panel" role="dialog" aria-modal="true" aria-label="保存した絵">
           <div class="draw-modal-head">
-            <h3>ほぞんした え</h3>
-            <button class="draw-modal-close" id="draw-modal-close" aria-label="とじる">✕</button>
+            <h3>保存した絵</h3>
+            <button class="draw-modal-close" id="draw-modal-close" aria-label="閉じる">✕</button>
           </div>
           <ul class="drawing-list" id="drawing-list"></ul>
         </div>
@@ -301,7 +301,7 @@ export class DrawingView {
       this.currentId = entry.id;
     }
     const ok = await this.persist();
-    this.toast(ok ? 'ほぞんしたよ' : 'ほぞん できなかった');
+    this.toast(ok ? '保存したよ' : '保存できなかった');
   }
 
   async persist() {
@@ -330,18 +330,18 @@ export class DrawingView {
     document.body.appendChild(a);
     a.click();
     a.remove();
-    this.toast('ダウンロード したよ');
+    this.toast('ダウンロードしたよ');
   }
 
   clear() {
-    if (!window.confirm('ぜんぶ けしても いい？')) return;
+    if (!window.confirm('全部消してもいい？')) return;
     this.strokes = [];
     this.loadedImage = null;
     // Clearing starts a fresh picture, so a later Save creates a new entry
     // instead of overwriting the drawing that was last opened.
     this.currentId = null;
     this.redraw();
-    this.toast('あたらしい キャンバス');
+    this.toast('新しいキャンバス');
   }
 
   openLoad() {
@@ -355,7 +355,7 @@ export class DrawingView {
 
   renderDrawingList() {
     if (!this.drawings.length) {
-      this.drawingList.innerHTML = '<li class="draw-empty">まだ ほぞんした えが ないよ</li>';
+      this.drawingList.innerHTML = '<li class="draw-empty">まだ保存した絵がないよ</li>';
       return;
     }
     this.drawingList.innerHTML = this.drawings.map((d) => `
@@ -364,7 +364,7 @@ export class DrawingView {
           <img src="${d.dataUrl}" alt="${d.name}">
           <span>${d.name}</span>
         </button>
-        <button class="drawing-del" data-del="${d.id}" aria-label="${d.name}を けす">✕</button>
+        <button class="drawing-del" data-del="${d.id}" aria-label="${d.name}を消す">✕</button>
       </li>
     `).join('');
   }
@@ -379,7 +379,7 @@ export class DrawingView {
       this.currentId = id;
       this.redraw();
       this.closeModal();
-      this.toast('ひらいたよ');
+      this.toast('開いたよ');
     };
     img.src = entry.dataUrl;
   }
@@ -387,7 +387,7 @@ export class DrawingView {
   async deleteDrawing(id) {
     const entry = this.drawings.find((d) => d.id === id);
     if (!entry) return;
-    if (!window.confirm(`「${entry.name}」を けしても いい？`)) return;
+    if (!window.confirm(`「${entry.name}」を消してもいい？`)) return;
     this.drawings = this.drawings.filter((d) => d.id !== id);
     if (this.currentId === id) this.currentId = null;
     await this.persist();

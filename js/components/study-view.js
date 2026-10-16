@@ -74,13 +74,13 @@ export class StudyView {
   render() {
     this.container.innerHTML = `
       <div class="study-view">
-        <button class="btn btn-secondary study-back" id="btn-back" aria-label="もどる">←</button>
+        <button class="btn btn-secondary study-back" id="btn-back" aria-label="戻る">←</button>
         <div class="study-status" id="study-status" aria-live="polite"></div>
         <div class="study-prompt">
           <div class="reading" id="prompt-reading" aria-live="polite"></div>
         </div>
         <div class="drawing-container" id="drawing-container" role="img"
-             aria-label="れんしゅうエリア。せんを かいてください。">
+             aria-label="練習エリア。線を書いてください。">
           <svg id="shadow-svg" viewBox="0 0 ${VIEWBOX} ${VIEWBOX}" xmlns="http://www.w3.org/2000/svg">
             <g id="shadow-group"></g>
             <g id="numbers-group"></g>
@@ -96,10 +96,10 @@ export class StudyView {
           <span id="stroke-info"></span>
         </div>
 
-        <div class="study-controls" id="study-controls" role="group" aria-label="そうさ">
-          <button class="btn btn-secondary" id="btn-replay" aria-label="hint">?</button>
-          <button class="btn btn-secondary" id="btn-redo" aria-label="やりなおす">↻</button>
-          <button class="btn btn-primary" id="btn-next" disabled aria-label="つぎへ">→</button>
+        <div class="study-controls" id="study-controls" role="group" aria-label="操作">
+          <button class="btn btn-secondary" id="btn-replay" aria-label="ヒント">?</button>
+          <button class="btn btn-secondary" id="btn-redo" aria-label="やり直す">↻</button>
+          <button class="btn btn-primary" id="btn-next" disabled aria-label="次へ">→</button>
         </div>
       </div>
     `;
@@ -287,7 +287,7 @@ export class StudyView {
     this.statusEl.classList.toggle('practiced', done && !clean);
     this.statusEl.setAttribute(
       'aria-label',
-      clean ? 'かんぺき' : done ? 'れんしゅうずみ' : ''
+      clean ? '完璧' : done ? '練習済み' : ''
     );
   }
 
@@ -415,7 +415,7 @@ export class StudyView {
       this.cleanRun = false;
       this.currentStroke = [];
       this.redrawAcceptedStrokes();
-      this.showFeedback('もう いちど', 800);
+      this.showFeedback('もう一度', 800);
     }
   }
 

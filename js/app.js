@@ -26,7 +26,7 @@ async function updateStarCounter() {
   }
   if (!starCounter) return;
   starCounter.textContent = `★ ${total}`;
-  starCounter.setAttribute('aria-label', `ほし ${total}こ`);
+  starCounter.setAttribute('aria-label', `星 ${total}個`);
   starCounter.classList.toggle('has-stars', total > 0);
 }
 
