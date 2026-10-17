@@ -173,7 +173,9 @@ export function matchStroke(userPoints, refPathData, options = {}) {
     return { similarity: 0, accepted: false };
   }
 
-  const refSampled = samplePath(refPathData, SAMPLE_COUNT);
+  // Callers may pass pre-sampled reference points (e.g. already translated to
+  // match the rendered canvas) to keep dot matching position-accurate.
+  const refSampled = options.refSampled || samplePath(refPathData, SAMPLE_COUNT);
 
   // Dots are matched leniently by position, not shape.
   if (isDotMark(refSampled)) {

@@ -56,6 +56,8 @@ export class StudyView {
     this.settings = { showRomaji: true };
     this.isAnimating = false;
     this._animationToken = 0;
+    // Translation applied to center the current character on the canvas.
+    this.offset = { x: 0, y: 0 };
   }
 
   async init() {
@@ -241,13 +243,21 @@ export class StudyView {
     this.isComplete = false;
     this.hintsUsed = 0;
 
-    // Pre-sample reference paths for recognition. Dots (i/j, etc.) are flagged
-    // so a single tap or short tick can satisfy them.
-    this.sampledPaths = this.charData ? this.charData.paths.map((p) => samplePath(p)) : [];
-    this.dotStrokes = this.sampledPaths.map((pts) => isDotMark(pts));
+    // Pre-sample reference paths in their raw data space first, so we can flag
+    // dots (i/j, etc.) for the tap-friendly match. Dot detection is based on
+    // size, so translation does not affect it.
+    const localSampled = this.charData ? this.charData.paths.map((p) => samplePath(p)) : [];
+    this.dotStrokes = localSampled.map((pts) => isDotMark(pts));
 
     this.updateUI();
+    // renderShadow() computes the centering offset and applies it to the guide,
+    // number and arrow layers.
     this.renderShadow();
+    // Translate the reference samples into the same (centered) space the child
+    // draws in, so dot-position matching stays accurate.
+    this.sampledPaths = localSampled.map((pts) =>
+      pts.map((p) => ({ x: p.x + this.offset.x, y: p.y + this.offset.y }))
+    );
     this.clearDrawCanvas();
 
     // Read the character name aloud when it appears.
@@ -304,6 +314,10 @@ export class StudyView {
     this.shadowGroup.innerHTML = '';
     this.numbersGroup.innerHTML = '';
     this.arrowGroup.innerHTML = '';
+    this.shadowGroup.removeAttribute('transform');
+    this.numbersGroup.removeAttribute('transform');
+    this.arrowGroup.removeAttribute('transform');
+    this.offset = { x: 0, y: 0 };
     if (!this.charData) return;
 
     this.charData.paths.forEach((d, i) => {
@@ -328,6 +342,20 @@ export class StudyView {
         text.textContent = num.n;
         this.numbersGroup.appendChild(text);
       });
+    }
+
+    // Center the character on the canvas based on its geometric bounds. Some
+    // glyphs (descenders like p/j, small kana, dakuten) sit well off-centre in
+    // the source data; nudging the whole character keeps it mid-canvas.
+    const b = this.shadowGroup.getBBox();
+    const dx = VIEWBOX / 2 - (b.x + b.width / 2);
+    const dy = VIEWBOX / 2 - (b.y + b.height / 2);
+    this.offset = { x: dx, y: dy };
+    if (dx || dy) {
+      const t = `translate(${dx} ${dy})`;
+      this.shadowGroup.setAttribute('transform', t);
+      this.numbersGroup.setAttribute('transform', t);
+      this.arrowGroup.setAttribute('transform', t);
     }
 
     this.renderStartArrow();
@@ -458,7 +486,10 @@ export class StudyView {
     }
 
     const refPath = this.charData.paths[this.strokeIndex];
-    const result = matchStroke(this.currentStroke, refPath, { threshold: TRACE_THRESHOLD });
+    const result = matchStroke(this.currentStroke, refPath, {
+      threshold: TRACE_THRESHOLD,
+      refSampled: this.sampledPaths[this.strokeIndex],
+    });
 
     if (result.accepted) {
       if (this.attemptedThisStroke) this.cleanRun = false;
@@ -579,12 +610,15 @@ export class StudyView {
     if (length <= 0) return;
     const ctx = this.drawCtx;
     const steps = Math.max(2, Math.ceil(length / 2));
+    const { x: ox, y: oy } = this.offset;
     ctx.beginPath();
     for (let i = 0; i <= steps; i++) {
       const l = Math.min(length, (length * i) / steps);
       const p = pathEl.getPointAtLength(l);
-      if (i === 0) ctx.moveTo(p.x, p.y);
-      else ctx.lineTo(p.x, p.y);
+      // getPointAtLength is in the path's local space; add the centering offset
+      // so demo strokes line up with the translated guide layer.
+      if (i === 0) ctx.moveTo(p.x + ox, p.y + oy);
+      else ctx.lineTo(p.x + ox, p.y + oy);
     }
     ctx.stroke();
   }
