@@ -133,7 +133,7 @@ export class Dashboard {
           <button class="btn btn-accent btn-small group-play" data-start="${group.chars[0]}"
                   aria-label="${group.label}を練習">▶</button>
         </div>
-        <div class="card-list">
+        <div class="card-list${this.section.id === 'hiragana' || this.section.id === 'katakana' ? ' kana-grid' : ''}">
           ${group.chars.map((c) => this.renderCardItem(c)).join('')}
         </div>
       </section>
