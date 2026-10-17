@@ -52,7 +52,7 @@ export class Dashboard {
       : 'タップしてその文字を練習';
     const cards = this.section.groups
       ? this.section.groups.map((g) => this.renderGroup(g)).join('')
-      : `<div class="card-list">${this.chars.map((c) => this.renderCardItem(c)).join('')}</div>`;
+      : `<div class="card-list five-grid">${this.chars.map((c) => this.renderCardItem(c)).join('')}</div>`;
     const caseToggle = this.section.id === 'english' ? `
       <div class="case-toggle" role="group" aria-label="文字の大小">
         <button class="case-btn ${this.caseMode === 'upper' ? 'active' : ''}" data-case="upper" aria-pressed="${this.caseMode === 'upper'}">大文字 ABC</button>
@@ -125,7 +125,7 @@ export class Dashboard {
         <div class="deck-group-head">
           <h4 class="deck-group-heading">${group.label}</h4>
         </div>
-        <div class="card-list${['hiragana', 'katakana', 'numbers'].includes(this.section.id) ? ' five-grid' : ''}">
+        <div class="card-list five-grid">
           ${group.chars.map((c) => this.renderCardItem(c)).join('')}
         </div>
       </section>
