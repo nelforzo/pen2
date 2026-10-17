@@ -100,12 +100,6 @@ export class Dashboard {
       });
     });
 
-    this.container.querySelectorAll('.group-play').forEach((el) => {
-      el.addEventListener('click', () => {
-        if (this.onPractice) this.onPractice(el.dataset.start);
-      });
-    });
-
     if (this.section.id === 'english') {
       this.container.querySelectorAll('.case-btn').forEach((btn) => {
         btn.addEventListener('click', () => {
@@ -130,8 +124,6 @@ export class Dashboard {
       <section class="deck-group">
         <div class="deck-group-head">
           <h4 class="deck-group-heading">${group.label}</h4>
-          <button class="btn btn-accent btn-small group-play" data-start="${group.chars[0]}"
-                  aria-label="${group.label}を練習">▶</button>
         </div>
         <div class="card-list${['hiragana', 'katakana', 'numbers'].includes(this.section.id) ? ' five-grid' : ''}">
           ${group.chars.map((c) => this.renderCardItem(c)).join('')}
