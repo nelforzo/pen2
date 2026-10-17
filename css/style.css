@@ -367,20 +367,29 @@ html, body {
   gap: 0.75rem;
 }
 
-/* Kana decks: exactly five per row to mirror the gojūon rows (や行/わ行
-   simply leave the last columns empty). */
-.card-list.kana-grid {
+/* Kana and number decks: exactly five per row (kana mirrors the gojūon rows,
+   where や行/わ行 simply leave the last columns empty). */
+.card-list.five-grid {
   grid-template-columns: repeat(5, 1fr);
   gap: 0.5rem;
 }
 
-.card-list.kana-grid .card-item {
+.card-list.five-grid .card-item {
   padding: 0.4rem 0.25rem;
   min-height: 72px;
 }
 
-.card-list.kana-grid .card-item .char {
+.card-list.five-grid .card-item .char {
   font-size: clamp(1.5rem, 5.5vw, 2.25rem);
+}
+
+/* Keep multi-digit numbers from overflowing their narrower cards. */
+.card-list.five-grid .card-item.digits-2 .char {
+  font-size: clamp(1.1rem, 3.5vw, 1.5rem);
+}
+
+.card-list.five-grid .card-item.digits-3 .char {
+  font-size: clamp(0.85rem, 2.8vw, 1.15rem);
 }
 
 .card-item {
