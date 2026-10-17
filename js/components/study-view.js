@@ -342,8 +342,9 @@ export class StudyView {
     const svgPath = this.shadowGroup.querySelectorAll('.shadow-path')[this.strokeIndex];
     if (!svgPath) return;
 
+    // Dots (i/j, etc.) and very short ticks don't need a direction hint.
+    if (this.dotStrokes && this.dotStrokes[this.strokeIndex]) return;
     const total = svgPath.getTotalLength();
-    // Dots and very short ticks don't need a direction hint.
     if (total < 10) return;
 
     const start = svgPath.getPointAtLength(0);
@@ -355,9 +356,10 @@ export class StudyView {
     dx /= dist;
     dy /= dist;
 
-    // Lay the arrow along the initial direction, starting a short distance
-    // past the very start of the stroke. Sized at ~80% of the original.
-    const tail = svgPath.getPointAtLength(Math.min(total * 0.15, 4));
+    // Lay the arrow along the initial direction, starting at the very start of
+    // the stroke so its tail meets the stroke (no gap). Sized at ~80% of the
+    // original.
+    const tail = start;
     const length = 5.6; // total arrow length (shaft + head), ~80% of original
     const headLength = 2.8;
     const headHalfWidth = 1.9;
