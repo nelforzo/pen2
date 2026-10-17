@@ -403,6 +403,8 @@ export class StudyView {
     this.isAnimating = false;
     this.isDrawing = true;
     this.currentStroke = [pt];
+    // Hide the hint once the child starts drawing.
+    this.arrowGroup.innerHTML = '';
   }
 
   addPoint(pt) {
@@ -450,6 +452,8 @@ export class StudyView {
     if (this.currentStroke.length < 2 && !isDot) {
       this.currentStroke = [];
       this.redrawAcceptedStrokes();
+      // Nothing was accepted, so bring the hint back.
+      this.renderStartArrow();
       return;
     }
 
@@ -475,6 +479,8 @@ export class StudyView {
       this.currentStroke = [];
       this.redrawAcceptedStrokes();
       this.showFeedback('もう一度', 800);
+      // The stroke was rejected, so show the hint again for the retry.
+      this.renderStartArrow();
     }
   }
 
