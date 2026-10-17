@@ -84,10 +84,13 @@ export class StudyView {
           <svg id="shadow-svg" viewBox="0 0 ${VIEWBOX} ${VIEWBOX}" xmlns="http://www.w3.org/2000/svg">
             <g id="shadow-group"></g>
             <g id="numbers-group"></g>
-            <g id="arrow-group"></g>
           </svg>
           <canvas id="grid-canvas" width="${VIEWBOX}" height="${VIEWBOX}"></canvas>
           <canvas id="draw-canvas" width="${VIEWBOX}" height="${VIEWBOX}"></canvas>
+          <!-- Arrow sits above the draw canvas so accepted strokes don't hide it. -->
+          <svg id="arrow-svg" viewBox="0 0 ${VIEWBOX} ${VIEWBOX}" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+            <g id="arrow-group"></g>
+          </svg>
           <div class="feedback-overlay" id="feedback-overlay">
             <div class="feedback-text" id="feedback-text" role="status" aria-live="polite"></div>
           </div>
