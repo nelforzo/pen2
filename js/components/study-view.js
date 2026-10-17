@@ -355,18 +355,25 @@ export class StudyView {
     dx /= dist;
     dy /= dist;
 
-    // Sit the arrow a short distance past the very start of the stroke.
-    const anchor = svgPath.getPointAtLength(Math.min(total * 0.2, 7));
-    const size = 5;
+    // Lay the arrow along the initial direction, starting a short distance
+    // past the very start of the stroke. Sized at ~80% of the original.
+    const tail = svgPath.getPointAtLength(Math.min(total * 0.15, 4));
+    const length = 5.6; // total arrow length (shaft + head), ~80% of original
+    const headLength = 2.8;
+    const headHalfWidth = 1.9;
     const perpX = -dy;
     const perpY = dx;
-    const tip = { x: anchor.x + dx * size, y: anchor.y + dy * size };
-    const back = { x: anchor.x - dx * size * 0.4, y: anchor.y - dy * size * 0.4 };
-    const left = { x: back.x + perpX * size * 0.7, y: back.y + perpY * size * 0.7 };
-    const right = { x: back.x - perpX * size * 0.7, y: back.y - perpY * size * 0.7 };
+    const tip = { x: tail.x + dx * length, y: tail.y + dy * length };
+    const neck = { x: tip.x - dx * headLength, y: tip.y - dy * headLength };
+    const left = { x: neck.x + perpX * headHalfWidth, y: neck.y + perpY * headHalfWidth };
+    const right = { x: neck.x - perpX * headHalfWidth, y: neck.y - perpY * headHalfWidth };
 
     const arrow = document.createElementNS('http://www.w3.org/2000/svg', 'path');
-    arrow.setAttribute('d', `M ${left.x} ${left.y} L ${tip.x} ${tip.y} L ${right.x} ${right.y} Z`);
+    arrow.setAttribute(
+      'd',
+      `M ${tail.x} ${tail.y} L ${neck.x} ${neck.y} ` +
+      `M ${left.x} ${left.y} L ${tip.x} ${tip.y} L ${right.x} ${right.y} Z`
+    );
     arrow.setAttribute('class', 'stroke-arrow');
     this.arrowGroup.appendChild(arrow);
   }

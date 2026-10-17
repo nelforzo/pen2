@@ -593,7 +593,12 @@ html, body {
 }
 
 .drawing-container svg .stroke-arrow {
-  fill: var(--primary);
+  /* Muted so it hints without competing with the child's own strokes. */
+  fill: #94a3b8;
+  stroke: #94a3b8;
+  stroke-width: 1.8;
+  stroke-linecap: round;
+  stroke-linejoin: round;
   pointer-events: none;
 }
 
