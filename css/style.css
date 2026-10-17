@@ -593,10 +593,11 @@ html, body {
 }
 
 .drawing-container svg .stroke-arrow {
-  /* Muted so it hints without competing with the child's own strokes. */
-  fill: #94a3b8;
-  stroke: #94a3b8;
-  stroke-width: 1.8;
+  /* Warm, high-contrast hint so it stands out from the grey guide stroke and
+     the child's blue/green/black strokes. */
+  fill: #ea580c;
+  stroke: #ea580c;
+  stroke-width: 2.2;
   stroke-linecap: round;
   stroke-linejoin: round;
   pointer-events: none;
