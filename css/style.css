@@ -592,6 +592,11 @@ html, body {
   pointer-events: none;
 }
 
+.drawing-container svg .stroke-arrow {
+  fill: var(--primary);
+  pointer-events: none;
+}
+
 .drawing-container canvas {
   position: absolute;
   top: 0;

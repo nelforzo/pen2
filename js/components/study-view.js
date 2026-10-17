@@ -84,6 +84,7 @@ export class StudyView {
           <svg id="shadow-svg" viewBox="0 0 ${VIEWBOX} ${VIEWBOX}" xmlns="http://www.w3.org/2000/svg">
             <g id="shadow-group"></g>
             <g id="numbers-group"></g>
+            <g id="arrow-group"></g>
           </svg>
           <canvas id="grid-canvas" width="${VIEWBOX}" height="${VIEWBOX}"></canvas>
           <canvas id="draw-canvas" width="${VIEWBOX}" height="${VIEWBOX}"></canvas>
@@ -106,6 +107,7 @@ export class StudyView {
 
     this.shadowGroup = this.container.querySelector('#shadow-group');
     this.numbersGroup = this.container.querySelector('#numbers-group');
+    this.arrowGroup = this.container.querySelector('#arrow-group');
     this.gridCanvas = this.container.querySelector('#grid-canvas');
     this.drawCanvas = this.container.querySelector('#draw-canvas');
     this.drawCtx = this.drawCanvas.getContext('2d');
@@ -298,6 +300,7 @@ export class StudyView {
   renderShadow() {
     this.shadowGroup.innerHTML = '';
     this.numbersGroup.innerHTML = '';
+    this.arrowGroup.innerHTML = '';
     if (!this.charData) return;
 
     this.charData.paths.forEach((d, i) => {
@@ -323,11 +326,55 @@ export class StudyView {
         this.numbersGroup.appendChild(text);
       });
     }
+
+    this.renderStartArrow();
+  }
+
+  /**
+   * Draw a small arrow near the start of the current stroke, pointing in the
+   * direction the child should draw. Only the current stroke gets one.
+   */
+  renderStartArrow() {
+    if (!this.arrowGroup) return;
+    this.arrowGroup.innerHTML = '';
+    if (!this.charData) return;
+
+    const svgPath = this.shadowGroup.querySelectorAll('.shadow-path')[this.strokeIndex];
+    if (!svgPath) return;
+
+    const total = svgPath.getTotalLength();
+    // Dots and very short ticks don't need a direction hint.
+    if (total < 10) return;
+
+    const start = svgPath.getPointAtLength(0);
+    // Look a little way ahead to work out the initial direction.
+    const ahead = svgPath.getPointAtLength(Math.min(total, 10));
+    let dx = ahead.x - start.x;
+    let dy = ahead.y - start.y;
+    const dist = Math.hypot(dx, dy) || 1;
+    dx /= dist;
+    dy /= dist;
+
+    // Sit the arrow a short distance past the very start of the stroke.
+    const anchor = svgPath.getPointAtLength(Math.min(total * 0.2, 7));
+    const size = 5;
+    const perpX = -dy;
+    const perpY = dx;
+    const tip = { x: anchor.x + dx * size, y: anchor.y + dy * size };
+    const back = { x: anchor.x - dx * size * 0.4, y: anchor.y - dy * size * 0.4 };
+    const left = { x: back.x + perpX * size * 0.7, y: back.y + perpY * size * 0.7 };
+    const right = { x: back.x - perpX * size * 0.7, y: back.y - perpY * size * 0.7 };
+
+    const arrow = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+    arrow.setAttribute('d', `M ${left.x} ${left.y} L ${tip.x} ${tip.y} L ${right.x} ${right.y} Z`);
+    arrow.setAttribute('class', 'stroke-arrow');
+    this.arrowGroup.appendChild(arrow);
   }
 
   updateHighlight() {
     const paths = this.shadowGroup.querySelectorAll('.shadow-path');
     paths.forEach((p, i) => p.classList.toggle('highlight', i === this.strokeIndex));
+    this.renderStartArrow();
     const total = this.charData?.paths.length || 0;
     const shown = Math.min(this.strokeIndex + 1, total);
     this.strokeInfo.textContent = `Stroke ${shown} of ${total}`;
